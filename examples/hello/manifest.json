@@ -1,0 +1,34 @@
+{
+  "id": "hello",
+  "name": "Hello, MargyC",
+  "description": "Example mod: Claude calls you by a nickname and can talk like a pirate. Source: examples/hello in the MargyC repo.",
+  "author": "narezany",
+  "version": "1.0",
+  "api": 1,
+  "entry": "com.example.hello.HelloMod",
+  "settings": [
+    {
+      "key": "nickname",
+      "type": "text",
+      "title": "Nickname",
+      "description": "How Claude should call you. Empty: as usual.",
+      "hint": "Captain",
+      "default": ""
+    },
+    {
+      "key": "pirate",
+      "type": "toggle",
+      "title": "Pirate mode",
+      "description": "Claude answers like a pirate.",
+      "default": false
+    },
+    {
+      "key": "greeting",
+      "type": "choice",
+      "title": "Greeting toast",
+      "description": "Shown when Claude opens.",
+      "options": ["Ahoy!", "Hello!", "Off"],
+      "default": "Ahoy!"
+    }
+  ]
+}

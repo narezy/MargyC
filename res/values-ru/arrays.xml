@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="max_upsell_feature_list_default">
+        <item>Намного больше лимитов, чтобы работать с Claude без перерывов</item>
+        <item>Масштабируйте использование под свои задачи</item>
+        <item>Первыми пробуйте самые продвинутые возможности Claude</item>
+    </string-array>
+    <string-array name="onboarding_v2_subscription_free_features">
+        <item>Общение с Claude — полезным ИИ-ассистентом</item>
+        <item>Загрузка файлов и изображений для анализа</item>
+        <item>Базовые лимиты использования</item>
+    </string-array>
+    <string-array name="pro_upsell_feature_list_default">
+        <item>Выведите работу с Claude на новый уровень</item>
+        <item>Доступ к нашим самым умным моделям</item>
+        <item>Приоритетный доступ в часы пиковой нагрузки</item>
+        <item>Ранний доступ к новым функциям</item>
+    </string-array>
+    <string-array name="thinking_timeline_verbs">
+        <item>Думает</item>
+        <item>Просеивает</item>
+        <item>Вникает</item>
+        <item>Оттачивает</item>
+        <item>Взвешивает</item>
+        <item>Размышляет</item>
+        <item>Обдумывает</item>
+        <item>Соображает</item>
+        <item>Представляет</item>
+        <item>Раздумывает</item>
+        <item>Прикидывает</item>
+        <item>Подсчитывает</item>
+        <item>Мозгует</item>
+        <item>Триангулирует</item>
+        <item>Кристаллизует</item>
+        <item>Расследует</item>
+        <item>Распутывает</item>
+    </string-array>
+</resources>

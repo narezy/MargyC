@@ -1,0 +1,5 @@
+keystore/
+__pycache__/
+*.apk
+*.mcmod
+build/

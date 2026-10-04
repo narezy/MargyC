@@ -1,0 +1,303 @@
+package cat.narezany.mods;
+
+import android.app.ActivityManager;
+import android.content.Context;
+import android.content.pm.PackageInfo;
+import android.hardware.display.DisplayManager;
+import android.os.Build;
+import android.util.DisplayMetrics;
+import android.view.Display;
+
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+import java.util.UUID;
+
+/**
+ * Мод «Дополнить системный промпт». Системный промпт собирается на сервере, поэтому текст
+ * выбранного пресета уходит в поле hidden_context запроса SendMessage: его видит только
+ * Claude, в текст сообщения он не попадает.
+ *
+ * Стандартный пресет нельзя изменить или удалить: в нём сведения о моде и об устройстве,
+ * чтобы Claude сразу знал, с чем имеет дело, если спросить про ошибку на телефоне.
+ */
+public final class Prompt {
+    /** Встроенные пресеты: развёрнутый (по умолчанию, с темами) и обычный. */
+    static final String DEFAULT_ID = "default";
+    static final String SHORT_ID = "short";
+
+    private static String deviceInfo;
+
+    private Prompt() {}
+
+    /** Поле hidden_context запроса SendMessage: пресет и промпт мемной модели, если она выбрана. */
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    public static List hidden(List context) {
+        List result = context;
+        try {
+            String fake = Fake.prompt();
+            if (enabled()) {
+                result = add(result, selected().text);
+            }
+            if (fake != null) {
+                result = add(result, fake);
+            }
+            for (String text : Plugins.prompts()) {
+                result = add(result, text);
+            }
+        } catch (Throwable ignored) {
+        }
+        return result;
+    }
+
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    private static List add(List context, String text) {
+        if (text.trim().isEmpty() || (context != null && context.contains(text))) {
+            return context; // конструктор зовут и при копировании запроса
+        }
+        List result = context == null ? new ArrayList() : new ArrayList(context);
+        result.add(text);
+        return result;
+    }
+
+    // ---- настройки ----
+
+    static boolean enabled() throws Exception {
+        return Mods.prefs().getBoolean("prompt_on", true);
+    }
+
+    static void setEnabled(boolean on) throws Exception {
+        Mods.prefs().edit().putBoolean("prompt_on", on).apply();
+    }
+
+    static final class Preset {
+        final String id;
+        final String name;
+        final String text;
+
+        Preset(String id, String name, String text) {
+            this.id = id;
+            this.name = name;
+            this.text = text;
+        }
+
+        boolean builtIn() {
+            return DEFAULT_ID.equals(id) || SHORT_ID.equals(id);
+        }
+    }
+
+    static List<Preset> presets() throws Exception {
+        List<Preset> list = new ArrayList<Preset>();
+        list.add(new Preset(DEFAULT_ID, "Развёрнутый", defaultText(Mods.app())));
+        list.add(new Preset(SHORT_ID, "Обычный", shortText(Mods.app())));
+        JSONArray a = new JSONArray(Mods.prefs().getString("presets", "[]"));
+        for (int i = 0; i < a.length(); i++) {
+            JSONObject o = a.getJSONObject(i);
+            list.add(new Preset(o.getString("id"), o.getString("name"), o.getString("text")));
+        }
+        return list;
+    }
+
+    static Preset selected() throws Exception {
+        String id = Mods.prefs().getString("preset", DEFAULT_ID);
+        List<Preset> all = presets();
+        for (Preset p : all) {
+            if (p.id.equals(id)) {
+                return p;
+            }
+        }
+        return all.get(0);
+    }
+
+    static void select(String id) throws Exception {
+        Mods.prefs().edit().putString("preset", id).apply();
+    }
+
+    /** Новый (id == null) или изменённый пресет. Возвращает его id. */
+    static String save(String id, String name, String text) throws Exception {
+        if (DEFAULT_ID.equals(id) || SHORT_ID.equals(id)) {
+            throw new IllegalArgumentException("встроенный пресет не меняется");
+        }
+        JSONArray a = new JSONArray(Mods.prefs().getString("presets", "[]"));
+        JSONArray out = new JSONArray();
+        boolean found = false;
+        if (id == null) {
+            id = UUID.randomUUID().toString();
+        }
+        for (int i = 0; i < a.length(); i++) {
+            JSONObject o = a.getJSONObject(i);
+            if (o.getString("id").equals(id)) {
+                o.put("name", name).put("text", text);
+                found = true;
+            }
+            out.put(o);
+        }
+        if (!found) {
+            out.put(new JSONObject().put("id", id).put("name", name).put("text", text));
+        }
+        Mods.prefs().edit().putString("presets", out.toString()).apply();
+        return id;
+    }
+
+    static void delete(String id) throws Exception {
+        JSONArray a = new JSONArray(Mods.prefs().getString("presets", "[]"));
+        JSONArray out = new JSONArray();
+        for (int i = 0; i < a.length(); i++) {
+            if (!a.getJSONObject(i).getString("id").equals(id)) {
+                out.put(a.getJSONObject(i));
+            }
+        }
+        Mods.prefs().edit().putString("presets", out.toString())
+                .putString("preset", id.equals(Mods.prefs().getString("preset", DEFAULT_ID))
+                        ? DEFAULT_ID : Mods.prefs().getString("preset", DEFAULT_ID))
+                .apply();
+    }
+
+    // ---- стандартный пресет ----
+
+    /** Обычный: о моде и устройстве. */
+    static String shortText(Context ctx) {
+        return about(ctx);
+    }
+
+    /** Развёрнутый: обычный + как писать темы MargyC, исходные цвета тем и палитра Material You телефона. */
+    static String defaultText(Context ctx) {
+        String you = materialYou(ctx);
+        return about(ctx) + "\n\n" + themeGuide() + (you.isEmpty() ? "" : "\n" + you);
+    }
+
+    /**
+     * Палитра Material You (Android 12+): цвета, которые система берёт из обоев. По ней Claude может
+     * сделать тему MargyC «под телефон».
+     */
+    static String materialYou(Context ctx) {
+        if (Build.VERSION.SDK_INT < 31) {
+            return "";
+        }
+        String[] palettes = {"accent1", "accent2", "accent3", "neutral1", "neutral2"};
+        int[] tones = {0, 10, 50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000};
+        StringBuilder sb = new StringBuilder("The phone's Material You palette (Android dynamic colors from the "
+                + "wallpaper). If the user asks for a theme matching their phone, system or wallpaper colors, "
+                + "build it from these: neutral tones for backgrounds and text, accent1 for the accent.\n");
+        for (String palette : palettes) {
+            sb.append(palette).append(':');
+            for (int tone : tones) {
+                int id = ctx.getResources().getIdentifier("system_" + palette + "_" + tone, "color", "android");
+                if (id != 0) {
+                    sb.append(' ').append(tone).append('=').append(Theme.hex(ctx.getColor(id)).substring(1));
+                }
+            }
+            sb.append('\n');
+        }
+        return sb.toString();
+    }
+
+    private static String about(Context ctx) {
+        return "Context added automatically by the app, not typed by the user. "
+                + "The user is chatting with you through MargyC (Margy Claude), an unofficial modification "
+                + "of the Claude Android app made by narezany. Telegram channel of the mod: "
+                + "https://t.me/margyclaude, author: https://t.me/narezany.\n"
+                + "User's device: " + device(ctx) + "\n"
+                + "Use this when the user asks which app they are using, or about problems with their "
+                + "phone or other apps on it. Do not bring it up otherwise.";
+    }
+
+    /** Как писать темы MargyC: чтобы Claude мог сделать тему по просьбе пользователя. */
+    static String themeGuide() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("MargyC themes. If the user asks for a theme (colors, style, mood, a copy of some app's look), "
+                + "reply with a ready theme in a code block. The user copies it and taps "
+                + "\u041c\u043e\u0434\u044b -> \u0412\u0441\u0442\u0430\u0432\u0438\u0442\u044c \u0442\u0435\u043c\u0443 "
+                + "(Paste theme), then restarts the app. Format, one entry per line:\n"
+                + "MargyC theme\n"
+                + "accent: #RRGGBB   (optional; recolors Claude's orange and the blue selection color with all their shades)\n"
+                + "dark RRGGBB: #RRGGBB   (replace an original color of the dark theme)\n"
+                + "light RRGGBB: #RRGGBB  (replace an original color of the light theme)\n"
+                + "Keys are the original colors listed below, values are the new colors (#AARRGGBB allowed). "
+                + "Colors not listed in the theme stay as in Claude. Keep text readable against backgrounds; "
+                + "for a full restyle replace the whole gray scale of the theme, keeping light-to-dark order.\n");
+        palette(sb, "Original dark theme colors", Names.DARK_PALETTE, true);
+        palette(sb, "Original light theme colors", Names.LIGHT_PALETTE, false);
+        return sb.toString();
+    }
+
+    private static void palette(StringBuilder sb, String title, int[] colors, boolean dark) {
+        sb.append(title).append(":");
+        for (int c : colors) {
+            sb.append(' ').append(Theme.hex(c).substring(1));
+            String role = Theme.role(c, dark);
+            if (role != null) {
+                sb.append(" (").append(english(role)).append(')');
+            }
+        }
+        sb.append('\n');
+    }
+
+    /** Роли цветов для Claude по-английски. */
+    private static String english(String role) {
+        switch (role) {
+            case "фирменный оранжевый (меняется и акцентом)": return "Claude orange, also changed by accent";
+            case "тёмный фирменный оранжевый": return "dark Claude orange";
+            case "выбранный пункт, ссылки (меняется и акцентом)": return "selected item, links, also changed by accent";
+            case "включённый переключатель (меняется и акцентом)": return "switch on, also changed by accent";
+            case "фон экранов и окон": return "screen and dialog background";
+            case "карточки, строки настроек, поле ввода": return "cards, settings rows, input field";
+            case "сообщения пользователя, приподнятые элементы": return "user message bubbles, raised elements";
+            case "основной текст": return "main text";
+            case "второстепенный текст": return "secondary text";
+            case "заголовки разделов": return "section titles";
+            case "выключенный переключатель, линии": return "switch off, lines";
+            default: return role;
+        }
+    }
+
+    static synchronized String device(Context ctx) {
+        if (deviceInfo != null) {
+            return deviceInfo;
+        }
+        StringBuilder sb = new StringBuilder();
+        sb.append(cap(Build.MANUFACTURER)).append(' ').append(Build.MODEL)
+                .append(" (device ").append(Build.DEVICE).append(", brand ").append(Build.BRAND).append(')');
+        sb.append("; Android ").append(Build.VERSION.RELEASE).append(" (API ").append(Build.VERSION.SDK_INT)
+                .append(", security patch ").append(Build.VERSION.SECURITY_PATCH).append(')');
+        if (Build.VERSION.SDK_INT >= 31 && !Build.SOC_MODEL.equals(Build.UNKNOWN)) {
+            sb.append("; SoC ").append(Build.SOC_MANUFACTURER).append(' ').append(Build.SOC_MODEL);
+        } else {
+            sb.append("; hardware ").append(Build.HARDWARE);
+        }
+        sb.append("; CPU ABIs ").append(String.join(", ", Build.SUPPORTED_ABIS));
+        sb.append("; ").append(Runtime.getRuntime().availableProcessors()).append(" cores");
+        try {
+            ActivityManager am = (ActivityManager) ctx.getSystemService(Context.ACTIVITY_SERVICE);
+            ActivityManager.MemoryInfo mi = new ActivityManager.MemoryInfo();
+            am.getMemoryInfo(mi);
+            sb.append(String.format(Locale.US, "; RAM %.1f GB", mi.totalMem / 1073741824.0));
+        } catch (Throwable ignored) {
+        }
+        try {
+            DisplayManager dm = (DisplayManager) ctx.getSystemService(Context.DISPLAY_SERVICE);
+            Display d = dm.getDisplay(Display.DEFAULT_DISPLAY);
+            DisplayMetrics m = new DisplayMetrics();
+            d.getRealMetrics(m);
+            sb.append("; screen ").append(m.widthPixels).append('x').append(m.heightPixels)
+                    .append(" px, ").append(m.densityDpi).append(" dpi, ")
+                    .append(Math.round(d.getRefreshRate())).append(" Hz");
+        } catch (Throwable ignored) {
+        }
+        try {
+            PackageInfo pi = ctx.getPackageManager().getPackageInfo(ctx.getPackageName(), 0);
+            sb.append("; Claude app ").append(pi.versionName).append(" (MargyC build)");
+        } catch (Throwable ignored) {
+        }
+        sb.append("; system language ").append(Locale.getDefault().toLanguageTag());
+        deviceInfo = sb.toString();
+        return deviceInfo;
+    }
+
+    private static String cap(String s) {
+        return s == null || s.isEmpty() ? "" : Character.toUpperCase(s.charAt(0)) + s.substring(1);
+    }
+}
