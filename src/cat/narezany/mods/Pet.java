@@ -159,8 +159,8 @@ public final class Pet {
             setClickable(false);
             setFocusable(false);
             setImportantForAccessibility(IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS);
-            w = dp(84); // ClawdFraming 55×37
-            h = dp(57);
+            w = dp(112); // ClawdFraming 55×37
+            h = dp(76);
             try {
                 frac = Mods.prefs().getFloat("pet_x", 0.9f);
                 lift = Mods.prefs().getFloat("pet_lift", 0f);

@@ -14,7 +14,7 @@ public interface PluginContext {
     /** Version of this API. New methods come with a higher version; existing ones never change. */
     int apiVersion();
 
-    /** MargyC version, e.g. "14". */
+    /** MargyC version, e.g. "1.1". */
     String margycVersion();
 
     Application app();

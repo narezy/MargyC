@@ -125,12 +125,23 @@ final class Ui {
         }
     }
 
+    /** Окно полноэкранного диалога в цветах экранов мода. */
+    void setupDialogWindow(Window w) {
+        w.setBackgroundDrawable(new ColorDrawable(bg));
+        w.setStatusBarColor(Color.TRANSPARENT);
+        w.setNavigationBarColor(Color.TRANSPARENT);
+        w.getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                | (night ? 0 : View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR | View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR));
+    }
+
     /** Заголовок по центру со стрелкой назад + прокручиваемое содержимое. */
     View screen(final Activity a, String title, View content) {
         FrameLayout bar = new FrameLayout(ctx);
         ArrowView back = new ArrowView(ctx, text, dp(2));
         back.setBackground(new RippleDrawable(ColorStateList.valueOf(pressed), null, null));
         back.setOnClickListener(v -> a.finish());
+        back.setTag("back");
         FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(dp(48), dp(48), Gravity.START | Gravity.CENTER_VERTICAL);
         lp.leftMargin = dp(8);
         bar.addView(back, lp);
@@ -167,13 +178,15 @@ final class Ui {
         final LinearLayout banner = new LinearLayout(ctx);
         banner.setGravity(Gravity.CENTER_VERTICAL);
         banner.setPadding(dp(20), dp(10), dp(10), dp(10));
-        GradientDrawable bg = round(text, 26);
+        // в цветах темы: как карточки, с тонкой рамкой, кнопка — акцентом
+        GradientDrawable bg = round(card, 26);
+        bg.setStroke(dp(1), divider);
         banner.setBackground(bg);
-        banner.setElevation(dp(6));
-        TextView msg = label("Перезапустите Claude, чтобы применить изменения", 15, this.bg, regular);
+        banner.setElevation(dp(8));
+        TextView msg = label(L.t("Перезапустите Claude, чтобы применить изменения"), 15, text, regular);
         msg.setLineSpacing(dp(2), 1f);
         banner.addView(msg, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
-        TextView go = label("Перезапустить", 15, Color.WHITE, medium);
+        TextView go = label(L.t("Перезапустить"), 15, Color.WHITE, medium);
         go.setGravity(Gravity.CENTER);
         go.setPadding(dp(16), 0, dp(16), 0);
         go.setBackground(ripple(round(accent, 20), 20));
@@ -537,10 +550,10 @@ final class Ui {
         update.run();
 
         if (reset != null) {
-            sheet.button("Сбросить", false, reset);
+            sheet.button(L.t("Сбросить"), false, reset);
         }
-        sheet.button("Отмена", false, null);
-        sheet.button("Готово", true, () -> listener.onColor(current[0]));
+        sheet.button(L.t("Отмена"), false, null);
+        sheet.button(L.t("Готово"), true, () -> listener.onColor(current[0]));
         sheet.show();
     }
 
@@ -616,7 +629,7 @@ final class Ui {
             paint.setStrokeWidth(stroke);
             paint.setStrokeCap(Paint.Cap.ROUND);
             paint.setStrokeJoin(Paint.Join.ROUND);
-            setContentDescription("Назад");
+            setContentDescription(L.t("Назад"));
         }
 
         @Override

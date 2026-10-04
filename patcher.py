@@ -809,6 +809,60 @@ def find_clawd(sm):
     return names
 
 
+def patch_chat_menu(sm, dec):
+    """Пункт «Скачать .md» в меню «⋮» чата. Меню — Compose-лямбда (Function3), пункты рисуются прямыми
+    вызовами item(label, onClick, modifier, painter, ...). Место — сразу после пункта «На главный экран»
+    (add_to_home): там, где обе ветки его if сходятся, зовём Export.menu(composer), а в начале лямбды
+    запоминаем её саму (Export.owner), из неё мод достаёт uuid беседы. Возвращает имена для Names.java."""
+    names = {"MENU_ITEM": "", "MENU_ITEM_METHOD": "", "MENU_DEFAULTS": "0", "PAINTER": "", "PAINTER_METHOD": "",
+             "ICON": ""}
+    m = re.search(r'name="add_to_home" id="(0x[0-9a-f]+)"', (dec / "res/values/public.xml").read_text())
+    if not m:
+        log("  меню чата: нет строки add_to_home, пункта .md не будет")
+        return names
+    rid = m.group(1)
+    block = re.compile(r"const (\w+), " + rid + r"\n[\s\S]{0,600}?invoke-static \{(\w+), (\w+)\}, (L[^;]+;)->(\w+)\((L[^;]+;)(L[^;]+;)\)L[^;]+;"
+                       r"[\s\S]{0,2500}?const(?:/16)? \w+, (0x[0-9a-f]+)\n\s+invoke-static/range \{(\w+) \.\. (\w+)\}, (L[^;]+;)->(\w+)"
+                       r"\((Ljava/lang/String;[^)]*)\)V\n([\s\S]{0,400}?)goto(?:/16)? (:goto_\w+)\n")
+    hooked = 0
+    for f in sm.files_with(f", {rid}"):
+        s = f.read_text()
+        out, changed = [], False
+        for method in re.split(r"(?=^\.method )", s, flags=re.M):
+            header = method.split("\n", 1)[0]
+            mm = block.search(method) if "(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;" in header else None
+            if not mm:
+                out.append(method)
+                continue
+            composer_type = mm.group(7)
+            params = PARAM.findall(mm.group(13))
+            if composer_type not in params:
+                out.append(method)
+                continue
+            # регистр композера после вызова пункта: move-object vX, vComposer, иначе тот, что в диапазоне
+            first = int(mm.group(9)[1:])
+            in_range = f"v{first + sum(2 if t in ('J', 'D') else 1 for t in params[:params.index(composer_type)])}"
+            mv = re.search(r"move-object(?:/from16)? (\w+), " + in_range + r"\n", mm.group(14))
+            composer = mv.group(1) if mv else in_range
+            label = mm.group(15)
+            hook = (f"    invoke-static/range {{{composer} .. {composer}}}, {MOD}Export;->menu(Ljava/lang/Object;)V\n\n")
+            method = re.sub(r"(\n\s*" + re.escape(label) + r"\n)", lambda x: x.group(1) + hook, method, count=1)
+            method = re.sub(r"(\.locals \d+\n)", r"\1\n    invoke-static/range {p0 .. p0}, " + MOD
+                            + r"Export;->owner(Ljava/lang/Object;)V\n", method, count=1)
+            # маска параметров по умолчанию — последний регистр диапазона вызова
+            defaults = re.findall(r"const(?:/16|/4)? " + mm.group(10) + r", (-?0x[0-9a-f]+)\n", mm.group(0))
+            names.update(MENU_ITEM=mm.group(11), MENU_ITEM_METHOD=mm.group(12),
+                         MENU_DEFAULTS=str(int(defaults[-1], 16)) if defaults else "0",
+                         PAINTER=mm.group(4), PAINTER_METHOD=mm.group(5), ICON=mm.group(6))
+            out.append(method)
+            changed = True
+            hooked += 1
+        if changed:
+            f.write_text("".join(out))
+    log(f"  меню чата: пункт .md {'добавлен' if hooked else 'не добавлен (не нашёл место)'}")
+    return names
+
+
 def patch_google_login(sm, dec, function0):
     """Кнопка «Продолжить с Google»: вместо входа (он не работает в чужом пакете) окно с подсказкой."""
     m = re.search(r'name="login_welcome_google_login_with_google_button" id="(0x[0-9a-f]+)"',
@@ -973,6 +1027,7 @@ def main():
         patch_prompt(sm)
         names.update(patch_models(sm))
         names.update(find_clawd(sm))
+        names.update(patch_chat_menu(sm, dec))
         patch_google_login(sm, dec, names["FUNCTION0"])
         palettes = patch_theme(sm)
         log(f"  перенесено пропатченных классов: {move_patched(sm)}")

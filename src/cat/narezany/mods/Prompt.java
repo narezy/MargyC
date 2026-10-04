@@ -28,6 +28,9 @@ public final class Prompt {
     /** Встроенные пресеты: развёрнутый (по умолчанию, с темами) и обычный. */
     static final String DEFAULT_ID = "default";
     static final String SHORT_ID = "short";
+    static final String SUPER_ID = "super";
+    /** Сервер не принимает слишком длинные строки hidden_context: длинный текст уходит частями. */
+    private static final int CHUNK = 3000;
 
     private static String deviceInfo;
 
@@ -40,7 +43,9 @@ public final class Prompt {
         try {
             String fake = Fake.prompt();
             if (enabled()) {
-                result = add(result, selected().text);
+                for (String part : chunks(selected().text)) {
+                    result = add(result, part);
+                }
             }
             if (fake != null) {
                 result = add(result, fake);
@@ -51,6 +56,27 @@ public final class Prompt {
         } catch (Throwable ignored) {
         }
         return result;
+    }
+
+    /** Текст частями не длиннее CHUNK, по границам абзацев (строк, если абзац слишком длинный). */
+    static List<String> chunks(String text) {
+        List<String> out = new ArrayList<String>();
+        StringBuilder cur = new StringBuilder();
+        for (String para : text.split("(?<=\n)")) {
+            if (cur.length() + para.length() > CHUNK && cur.length() > 0) {
+                out.add(cur.toString().trim());
+                cur.setLength(0);
+            }
+            while (para.length() > CHUNK) {
+                out.add(para.substring(0, CHUNK));
+                para = para.substring(CHUNK);
+            }
+            cur.append(para);
+        }
+        if (cur.toString().trim().length() > 0) {
+            out.add(cur.toString().trim());
+        }
+        return out;
     }
 
     @SuppressWarnings({"rawtypes", "unchecked"})
@@ -85,14 +111,15 @@ public final class Prompt {
         }
 
         boolean builtIn() {
-            return DEFAULT_ID.equals(id) || SHORT_ID.equals(id);
+            return DEFAULT_ID.equals(id) || SHORT_ID.equals(id) || SUPER_ID.equals(id);
         }
     }
 
     static List<Preset> presets() throws Exception {
         List<Preset> list = new ArrayList<Preset>();
-        list.add(new Preset(DEFAULT_ID, "Развёрнутый", defaultText(Mods.app())));
-        list.add(new Preset(SHORT_ID, "Обычный", shortText(Mods.app())));
+        list.add(new Preset(DEFAULT_ID, L.t("Развёрнутый"), defaultText(Mods.app())));
+        list.add(new Preset(SHORT_ID, L.t("Обычный"), shortText(Mods.app())));
+        list.add(new Preset(SUPER_ID, L.t("Суперразвёрнутый"), superText(Mods.app())));
         JSONArray a = new JSONArray(Mods.prefs().getString("presets", "[]"));
         for (int i = 0; i < a.length(); i++) {
             JSONObject o = a.getJSONObject(i);
@@ -118,7 +145,7 @@ public final class Prompt {
 
     /** Новый (id == null) или изменённый пресет. Возвращает его id. */
     static String save(String id, String name, String text) throws Exception {
-        if (DEFAULT_ID.equals(id) || SHORT_ID.equals(id)) {
+        if (DEFAULT_ID.equals(id) || SHORT_ID.equals(id) || SUPER_ID.equals(id)) {
             throw new IllegalArgumentException("встроенный пресет не меняется");
         }
         JSONArray a = new JSONArray(Mods.prefs().getString("presets", "[]"));
@@ -163,10 +190,46 @@ public final class Prompt {
         return about(ctx);
     }
 
-    /** Развёрнутый: обычный + как писать темы MargyC, исходные цвета тем и палитра Material You телефона. */
+    /** Развёрнутый: обычный + как писать темы MargyC и исходные цвета тем. */
     static String defaultText(Context ctx) {
+        return about(ctx) + "\n\n" + themeGuide();
+    }
+
+    /** Суперразвёрнутый: всё о MargyC — функции, включённые моды, темы и палитра Material You телефона. */
+    static String superText(Context ctx) {
         String you = materialYou(ctx);
-        return about(ctx) + "\n\n" + themeGuide() + (you.isEmpty() ? "" : "\n" + you);
+        return about(ctx) + "\n\n" + features(ctx) + "\n\n" + themeGuide() + (you.isEmpty() ? "" : "\n" + you);
+    }
+
+    /** Коротко обо всех функциях MargyC и включённых своих модах. */
+    static String features(Context ctx) {
+        StringBuilder sb = new StringBuilder("MargyC " + Mods.VERSION + " features, all on the Mods screen "
+                + "(\u041c\u043e\u0434\u044b in the side menu): Russian UI toggle; accent color and custom themes "
+                + "(format below); system prompt presets (this text); meme models: fake models on top of the model "
+                + "picker, answered by a real model, with their own prompt, shared as text in this format:\n"
+                + "MargyC model\nname: Fable 6969\ndescription: one line\nbase: <real model id>\nprompt:\n<prompt to the end>\n"
+                + "(the user pastes it via Meme models -> Paste a model); Clawd pet on the message box; conversation "
+                + "export to .md from the chat's menu and opening .md as a chat; custom mods (.mcmod plugins: dex + "
+                + "manifest.json, docs at github.com/narezy/MargyC/blob/main/docs/plugins.md); crash log and journal.");
+        List<Plugins.Info> mods = new ArrayList<Plugins.Info>();
+        for (Plugins.Info info : Plugins.installed(ctx)) {
+            if (Plugins.enabled(info.id)) {
+                mods.add(info);
+            }
+        }
+        if (!mods.isEmpty()) {
+            sb.append("\nEnabled custom mods:");
+            for (Plugins.Info info : mods) {
+                sb.append("\n- ").append(info.name);
+                if (!info.author.isEmpty()) {
+                    sb.append(" by ").append(info.author);
+                }
+                if (!info.description.isEmpty()) {
+                    sb.append(": ").append(info.description);
+                }
+            }
+        }
+        return sb.toString();
     }
 
     /**
@@ -208,17 +271,13 @@ public final class Prompt {
     /** Как писать темы MargyC: чтобы Claude мог сделать тему по просьбе пользователя. */
     static String themeGuide() {
         StringBuilder sb = new StringBuilder();
-        sb.append("MargyC themes. If the user asks for a theme (colors, style, mood, a copy of some app's look), "
-                + "reply with a ready theme in a code block. The user copies it and taps "
-                + "\u041c\u043e\u0434\u044b -> \u0412\u0441\u0442\u0430\u0432\u0438\u0442\u044c \u0442\u0435\u043c\u0443 "
-                + "(Paste theme), then restarts the app. Format, one entry per line:\n"
+        sb.append("MargyC themes: if asked for a theme, reply with one in a code block; the user pastes it via "
+                + "Mods -> Paste theme and restarts. Format, one entry per line:\n"
                 + "MargyC theme\n"
-                + "accent: #RRGGBB   (optional; recolors Claude's orange and the blue selection color with all their shades)\n"
-                + "dark RRGGBB: #RRGGBB   (replace an original color of the dark theme)\n"
-                + "light RRGGBB: #RRGGBB  (replace an original color of the light theme)\n"
-                + "Keys are the original colors listed below, values are the new colors (#AARRGGBB allowed). "
-                + "Colors not listed in the theme stay as in Claude. Keep text readable against backgrounds; "
-                + "for a full restyle replace the whole gray scale of the theme, keeping light-to-dark order.\n");
+                + "accent: #RRGGBB (optional: Claude's orange and the blue selection color, all shades)\n"
+                + "dark RRGGBB: #RRGGBB / light RRGGBB: #RRGGBB (original color of the dark/light theme -> new color)\n"
+                + "Keys are the original colors below; unlisted colors stay. Keep text readable; for a full restyle "
+                + "replace the whole gray scale, keeping light-to-dark order.\n");
         palette(sb, "Original dark theme colors", Names.DARK_PALETTE, true);
         palette(sb, "Original light theme colors", Names.LIGHT_PALETTE, false);
         return sb.toString();

@@ -150,27 +150,27 @@ public final class Plugins {
             }
             File manifest = new File(tmp, "manifest.json");
             if (!manifest.exists()) {
-                throw new IllegalArgumentException("в архиве нет manifest.json");
+                throw new IllegalArgumentException(L.t("в архиве нет manifest.json"));
             }
             JSONObject m = new JSONObject(read(manifest));
             String id = m.optString("id");
             if (!id.matches("[a-z0-9][a-z0-9._-]{1,63}")) {
-                throw new IllegalArgumentException("id в manifest.json: маленькие латинские буквы, цифры, . _ -");
+                throw new IllegalArgumentException(L.t("id в manifest.json: маленькие латинские буквы, цифры, . _ -"));
             }
             if (m.optString("entry").isEmpty()) {
-                throw new IllegalArgumentException("в manifest.json нет entry (класс мода)");
+                throw new IllegalArgumentException(L.t("в manifest.json нет entry (класс мода)"));
             }
             if (!new File(tmp, "classes.dex").exists()) {
-                throw new IllegalArgumentException("в архиве нет classes.dex");
+                throw new IllegalArgumentException(L.t("в архиве нет classes.dex"));
             }
             if (m.optInt("api", 1) > API) {
-                throw new IllegalArgumentException("мод для более новой версии MargyC (API " + m.optInt("api") + ")");
+                throw new IllegalArgumentException(L.t("мод для более новой версии MargyC (API ") + m.optInt("api") + ")");
             }
             File dir = new File(root(ctx), id);
             delete(dir);
             root(ctx).mkdirs();
             if (!tmp.renameTo(dir)) {
-                throw new IllegalStateException("не удалось сохранить мод");
+                throw new IllegalStateException(L.t("не удалось сохранить мод"));
             }
             for (File f : dir.listFiles()) {
                 if (f.getName().endsWith(".dex")) {

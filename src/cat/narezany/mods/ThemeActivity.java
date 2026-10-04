@@ -34,7 +34,7 @@ public final class ThemeActivity extends Activity {
         content = ui.column();
         content.setPadding(ui.dp(16), ui.dp(4), ui.dp(16), ui.dp(104));
         build();
-        setContentView(ui.withRestartBanner(this, ui.screen(this, dark ? "Тёмная тема" : "Светлая тема", content)));
+        setContentView(ui.withRestartBanner(this, ui.screen(this, L.t(dark ? "Тёмная тема" : "Светлая тема"), content)));
     }
 
     private void build() {
@@ -51,13 +51,13 @@ public final class ThemeActivity extends Activity {
             if (e.getValue().isEmpty()) {
                 continue;
             }
-            content.addView(ui.sectionTitle(e.getKey()));
+            content.addView(ui.sectionTitle(L.t(e.getKey())));
             LinearLayout g = ui.column();
             for (final int original : e.getValue()) {
                 Integer o = overrides.get(original);
                 final int now = o != null ? o : original;
                 String role = Theme.role(original, dark);
-                String sub = (role != null ? role : "") + (o != null ? (role != null ? ", было " : "было ") + hex(original) : "");
+                String sub = (role != null ? L.t(role) : "") + (o != null ? (role != null ? L.t(", было ") : L.t("было ")) + hex(original) : "");
                 Ui.Row row = ui.new Row(hex(now), sub);
                 row.swatch(now);
                 row.setOnClickListener(v -> ui.pickColor(hex(original), now, color -> {
@@ -78,7 +78,7 @@ public final class ThemeActivity extends Activity {
         }
         if (!overrides.isEmpty()) {
             LinearLayout g = ui.column();
-            Ui.Row reset = ui.new Row("Сбросить все цвета", "");
+            Ui.Row reset = ui.new Row(L.t("Сбросить все цвета"), "");
             reset.title.setTextColor(Theme.resolve(dark ? 0xFFFE8181 : 0xFFB53333, dark));
             reset.setOnClickListener(v -> {
                 overrides.clear();

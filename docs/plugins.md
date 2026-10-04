@@ -98,7 +98,7 @@ and in the journal, and the other mods still load.
 | Method | |
 |---|---|
 | `apiVersion()` | API version, `1` |
-| `margycVersion()` | MargyC version, e.g. `"14"` |
+| `margycVersion()` | MargyC version, e.g. `"1.1"` |
 | `app()` | the `Application` |
 | `id()`, `dir()` | the mod id and its folder (read only) |
 | `prefs()` | the mod's own `SharedPreferences`; settings live here too |

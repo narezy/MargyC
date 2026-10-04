@@ -53,7 +53,7 @@ public final class Bridge {
             Object icon = icon(params[1], "plugin", list);
             for (int i = tabs.length - 1; i >= 0; i--) {
                 if (!used.contains(tabs[i])) {
-                    list.add(itemCtor.newInstance(tabs[i], icon, LABEL, 1, null));
+                    list.add(itemCtor.newInstance(tabs[i], icon, L.t(LABEL), 1, null));
                     return;
                 }
             }
@@ -91,7 +91,7 @@ public final class Bridge {
     private static boolean isMods(Object item) {
         try {
             init();
-            return itemClass.isInstance(item) && LABEL.equals(titleField.get(item));
+            return itemClass.isInstance(item) && L.t(LABEL).equals(titleField.get(item));
         } catch (Throwable t) {
             return false;
         }
@@ -138,7 +138,7 @@ public final class Bridge {
      * Иконка из шрифта Anthropicon по имени. Иконки лежат полями в объекте-холдере,
      * на который ссылается статическое поле класса иконки.
      */
-    private static Object icon(Class<?> iconClass, String name, List<?> items) {
+    static Object icon(Class<?> iconClass, String name, List<?> items) {
         try {
             Field nameField = null;
             for (Field f : iconClass.getDeclaredFields()) {
@@ -207,7 +207,7 @@ public final class Bridge {
     }
 
     /** Реализация обфусцированного Function0 через Proxy: invoke() выполняет action и возвращает Unit. */
-    private static Object function0(final String name, final Runnable action) throws Exception {
+    static Object function0(final String name, final Runnable action) throws Exception {
         final Class<?> fn = Class.forName(Names.FUNCTION0);
         final Object unit = unit();
         return Proxy.newProxyInstance(fn.getClassLoader(), new Class<?>[] {fn},

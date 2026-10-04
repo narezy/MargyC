@@ -23,7 +23,7 @@ public final class CrashActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setTitle("Claude Mods: вылет");
+        setTitle(L.t("MargyC: вылет"));
         final String log = read();
 
         LinearLayout root = new LinearLayout(this);
@@ -34,20 +34,19 @@ public final class CrashActivity extends Activity {
         root.setPadding(pad, pad, pad, pad);
 
         TextView hint = new TextView(this);
-        hint.setText("Приложение вылетело в прошлый раз. Скопируй текст ниже и скинь его. "
-                + "Копия лежит в Загрузки/ClaudeMods.");
+        hint.setText(L.t("Приложение вылетело в прошлый раз. Скопируй текст ниже и скинь его. Копия лежит в Загрузки/ClaudeMods."));
         hint.setTextColor(Color.rgb(0xFA, 0xF9, 0xF5));
         hint.setTextSize(TypedValue.COMPLEX_UNIT_SP, 15);
         root.addView(hint);
 
         Button copy = new Button(this);
-        copy.setText("Скопировать");
+        copy.setText(L.t("Скопировать"));
         copy.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 ClipboardManager cm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
                 cm.setPrimaryClip(ClipData.newPlainText("crash", log));
-                Toast.makeText(CrashActivity.this, "Скопировано", Toast.LENGTH_SHORT).show();
+                Toast.makeText(CrashActivity.this, L.t("Скопировано"), Toast.LENGTH_SHORT).show();
             }
         });
         root.addView(copy);

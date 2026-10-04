@@ -11,7 +11,7 @@ import java.lang.reflect.Method;
 /** Общие штуки мода: открыть экран модов, настройки, язык приложения, перезапуск. */
 public final class Mods {
     static final String TAG = "MargyC";
-    static final String VERSION = "14";
+    static final String VERSION = "1.1"; // версия MargyC, не Claude
 
     private Mods() {}
 

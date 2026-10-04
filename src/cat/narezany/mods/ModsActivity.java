@@ -28,7 +28,7 @@ public final class ModsActivity extends Activity {
     private Ui.Row presetRow, presetTextRow, accentRow, darkRow, lightRow;
     private View accentSwatch;
     private LinearLayout fakeGroup, pluginGroup;
-    private static final int PICK_PLUGIN = 7;
+    private static final int PICK_PLUGIN = 7, PICK_MD = 8;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -40,45 +40,53 @@ public final class ModsActivity extends Activity {
         LinearLayout content = ui.column();
         content.setPadding(ui.dp(16), ui.dp(4), ui.dp(16), ui.dp(104)); // место под плашку перезапуска
 
-        content.addView(ui.sectionTitle("Язык"));
+        content.addView(ui.sectionTitle(L.t("Язык")));
         content.addView(languageGroup());
-        content.addView(ui.sectionTitle("Оформление"));
+        content.addView(ui.sectionTitle(L.t("Оформление")));
         content.addView(themeGroup());
         LinearLayout.LayoutParams gap = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
         gap.topMargin = ui.dp(12);
         content.addView(shareGroup(), gap);
-        content.addView(ui.sectionTitle("Питомец"));
+        content.addView(ui.sectionTitle(L.t("Питомец")));
         content.addView(petGroup());
         content.addView(ui.sectionTitle("Claude"));
         content.addView(promptGroup());
-        content.addView(ui.sectionTitle("Мемные модели"));
+        content.addView(ui.sectionTitle(L.t("Мемные модели")));
         fakeGroup = ui.column();
         content.addView(fakeGroup);
-        content.addView(ui.sectionTitle("Свои моды"));
+        content.addView(ui.sectionTitle(L.t("Диалоги")));
+        content.addView(dialogsGroup());
+        content.addView(ui.sectionTitle(L.t("Свои моды")));
         pluginGroup = ui.column();
         content.addView(pluginGroup);
 
         content.addView(ui.sectionTitle("MargyC"));
         content.addView(linksGroup());
 
-        TextView footer = ui.label("MargyC " + Mods.VERSION + " от narezany", 13, ui.secondary, ui.regular);
+        TextView footer = ui.label("MargyC " + Mods.VERSION + L.t(" от narezany"), 13, ui.secondary, ui.regular);
         footer.setGravity(Gravity.CENTER);
         footer.setLineSpacing(ui.dp(3), 1f);
         footer.setPadding(0, ui.dp(32), 0, ui.dp(8));
+        footer.setBackground(ui.ripple(ui.round(android.graphics.Color.TRANSPARENT, 12), 12));
         final long[] taps = {0, 0}; // число касаний подряд, время последнего
         footer.setOnClickListener(v -> {
             long now = System.currentTimeMillis();
-            taps[0] = now - taps[1] < 600 ? taps[0] + 1 : 1;
+            taps[0] = now - taps[1] < 700 ? taps[0] + 1 : 1;
             taps[1] = now;
-            if (taps[0] >= 10) {
+            // видно, что подпись нажимается: короткий «клик»
+            v.animate().cancel();
+            v.setScaleX(0.94f);
+            v.setScaleY(0.94f);
+            v.animate().scaleX(1f).scaleY(1f).setDuration(160).start();
+            if (taps[0] >= 5) {
                 taps[0] = 0;
                 kai();
             }
         });
         content.addView(footer);
 
-        setContentView(ui.withRestartBanner(this, ui.screen(this, "Моды", content)));
+        setContentView(ui.withRestartBanner(this, ui.screen(this, L.t("Моды"), content)));
     }
 
     @Override
@@ -91,16 +99,16 @@ public final class ModsActivity extends Activity {
 
     private View languageGroup() {
         LinearLayout g = ui.column();
-        Ui.Row ru = ui.new Row("Русский язык", Mods.localeSupported()
+        Ui.Row ru = ui.new Row(L.t("Русский язык"), Mods.localeSupported()
                 ? (Mods.systemRussian()
-                        ? "Весь интерфейс на русском. Выключишь — будет английский."
-                        : "Весь интерфейс на русском. Выключишь — вернётся язык системы.")
-                : "Нужен Android 13 или новее. На старых версиях поставь русский языком системы, перевод подхватится сам.");
+                        ? L.t("Весь интерфейс на русском. Выключишь — будет английский.")
+                        : L.t("Весь интерфейс на русском. Выключишь — вернётся язык системы."))
+                : L.t("Нужен Android 13 или новее. На старых версиях поставь русский языком системы, перевод подхватится сам."));
         ru.toggle(Mods.isRussian(this), Mods.localeSupported(), on -> {
             if (Mods.setRussian(this, on)) {
                 return true;
             }
-            Toast.makeText(this, "Не получилось сменить язык", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, L.t("Не получилось сменить язык"), Toast.LENGTH_SHORT).show();
             return false;
         });
         g.addView(ru);
@@ -113,7 +121,7 @@ public final class ModsActivity extends Activity {
     private View themeGroup() {
         final LinearLayout g = ui.column();
 
-        accentRow = ui.new Row("Акцентный цвет", "");
+        accentRow = ui.new Row(L.t("Акцентный цвет"), "");
         accentSwatch = accentRow.swatch(Theme.accent());
         accentRow.toggle(Theme.accentOn(), true, on -> {
             try {
@@ -132,7 +140,7 @@ public final class ModsActivity extends Activity {
         accentSwatch.setOnClickListener(v -> pickAccent());
         g.addView(accentRow);
 
-        Ui.Row custom = ui.new Row("Своя тема", "Свои цвета для тёмной и светлой темы Claude.");
+        Ui.Row custom = ui.new Row(L.t("Своя тема"), L.t("Свои цвета для тёмной и светлой темы Claude."));
         custom.toggle(Theme.customOn(), true, on -> {
             try {
                 Theme.setCustom(on);
@@ -147,11 +155,11 @@ public final class ModsActivity extends Activity {
         });
         g.addView(custom);
 
-        darkRow = ui.new Row("Тёмная тема", "");
+        darkRow = ui.new Row(L.t("Тёмная тема"), "");
         darkRow.chevron();
         darkRow.setOnClickListener(v -> openTheme(true));
         g.addView(darkRow);
-        lightRow = ui.new Row("Светлая тема", "");
+        lightRow = ui.new Row(L.t("Светлая тема"), "");
         lightRow.chevron();
         lightRow.setOnClickListener(v -> openTheme(false));
         g.addView(lightRow);
@@ -163,7 +171,7 @@ public final class ModsActivity extends Activity {
     }
 
     private void pickAccent() {
-        ui.pickColor("Акцентный цвет", Theme.accent(), color -> {
+        ui.pickColor(L.t("Акцентный цвет"), Theme.accent(), color -> {
             try {
                 Theme.setAccent(true, color);
                 refresh();
@@ -180,15 +188,15 @@ public final class ModsActivity extends Activity {
 
     private View shareGroup() {
         LinearLayout g = ui.column();
-        Ui.Row copy = ui.new Row("Скопировать мою тему", "Текстом, чтобы отправить другу.");
+        Ui.Row copy = ui.new Row(L.t("Скопировать мою тему"), L.t("Текстом, чтобы отправить другу."));
         copy.setOnClickListener(v -> {
             String theme = Theme.export();
             ClipboardManager cm = (ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
             cm.setPrimaryClip(ClipData.newPlainText("MargyC theme", theme));
-            ui.new Sheet("Тема скопирована").message(theme.trim()).button("Готово", true, null).show();
+            ui.new Sheet(L.t("Тема скопирована")).message(theme.trim()).button(L.t("Готово"), true, null).show();
         });
         g.addView(copy);
-        Ui.Row paste = ui.new Row("Вставить тему", "Из буфера обмена. Тему может написать и Claude, просто попроси.");
+        Ui.Row paste = ui.new Row(L.t("Вставить тему"), L.t("Из буфера обмена. Тему может написать и Claude, просто попроси."));
         paste.setOnClickListener(v -> importTheme());
         g.addView(paste);
         ui.restyle(g);
@@ -206,15 +214,15 @@ public final class ModsActivity extends Activity {
             Log.e(Mods.TAG, "import theme", e);
         }
         if (n == 0) {
-            ui.new Sheet("Это не тема")
-                    .message("В буфере обмена нет темы MargyC. Скопируй её целиком, вместе со строками вида «dark 151515: #0E1116».")
-                    .button("Понятно", true, null).show();
+            ui.new Sheet(L.t("Это не тема"))
+                    .message(L.t("В буфере обмена нет темы MargyC. Скопируй её целиком, вместе со строками вида «dark 151515: #0E1116»."))
+                    .button(L.t("Понятно"), true, null).show();
             return;
         }
         Mods.needRestart();
-        ui.new Sheet("Тема применена")
-                .message("Прочитано цветов: " + n + ". Они появятся после перезапуска приложения.")
-                .button("Готово", true, this::recreate)
+        ui.new Sheet(L.t("Тема применена"))
+                .message(L.t("Прочитано цветов: ") + n + L.t(". Они появятся после перезапуска приложения."))
+                .button(L.t("Готово"), true, this::recreate)
                 .show();
     }
 
@@ -223,16 +231,16 @@ public final class ModsActivity extends Activity {
     /** Карточки канала (цвета Telegram) и GitHub, строка «Написать автору». */
     private View linksGroup() {
         LinearLayout g = ui.column();
-        g.addView(linkCard("Канал MargyC", "Новые обновления", new int[] {0xFF37BBFE, 0xFF2AABEE, 0xFF1E96D4},
-                new PlaneView(this), "Подписаться", 0xFF1E96D4, "https://t.me/margyclaude"));
+        g.addView(linkCard(L.t("Канал MargyC"), L.t("Новые обновления"), new int[] {0xFF37BBFE, 0xFF2AABEE, 0xFF1E96D4},
+                new PlaneView(this), L.t("Подписаться"), 0xFF1E96D4, "https://t.me/margyclaude"));
         LinearLayout.LayoutParams gl = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
         gl.topMargin = ui.dp(10);
-        g.addView(linkCard("MargyC на GitHub", "Исходники, свои моды и свежий APK",
-                new int[] {0xFF444C56, 0xFF2D333B, 0xFF1C2128}, new GitHubView(this), "Открыть", 0xFF24292F, GITHUB), gl);
+        g.addView(linkCard(L.t("MargyC на GitHub"), L.t("Исходники, свои моды и свежий APK"),
+                new int[] {0xFF444C56, 0xFF2D333B, 0xFF1C2128}, new GitHubView(this), L.t("Открыть"), 0xFF24292F, GITHUB), gl);
 
         LinearLayout authorBox = ui.column();
-        Ui.Row author = ui.new Row("Написать автору", "@narezany в Telegram");
+        Ui.Row author = ui.new Row(L.t("Написать автору"), L.t("@narezany в Telegram"));
         TextView avatar = ui.label("N", 18, Color.WHITE, ui.medium);
         avatar.setGravity(Gravity.CENTER);
         GradientDrawable av = new GradientDrawable();
@@ -357,8 +365,8 @@ public final class ModsActivity extends Activity {
             on = Prompt.enabled();
         } catch (Exception ignored) {
         }
-        Ui.Row prompt = ui.new Row("Дополнить системный промпт",
-                "Claude получает текст пресета вместе с каждым сообщением. В чате его не видно.");
+        Ui.Row prompt = ui.new Row(L.t("Дополнить системный промпт"),
+                L.t("Claude получает текст пресета вместе с каждым сообщением. В чате его не видно."));
         prompt.toggle(on, true, value -> {
             try {
                 Prompt.setEnabled(value);
@@ -372,12 +380,12 @@ public final class ModsActivity extends Activity {
         });
         g.addView(prompt);
 
-        presetRow = ui.new Row("Пресет", "");
+        presetRow = ui.new Row(L.t("Пресет"), "");
         presetRow.chevron();
         presetRow.setOnClickListener(v -> choosePreset());
         g.addView(presetRow);
 
-        presetTextRow = ui.new Row("Текст пресета", "");
+        presetTextRow = ui.new Row(L.t("Текст пресета"), "");
         presetTextRow.chevron();
         presetTextRow.setOnClickListener(v -> openPreset());
         g.addView(presetTextRow);
@@ -390,12 +398,15 @@ public final class ModsActivity extends Activity {
 
     private void choosePreset() {
         try {
-            final Ui.Sheet sheet = ui.new Sheet("Пресет");
+            final Ui.Sheet sheet = ui.new Sheet(L.t("Пресет"));
             String current = Prompt.selected().id;
             for (final Prompt.Preset p : Prompt.presets()) {
                 sheet.item(p.name, p.id.equals(Prompt.DEFAULT_ID)
-                                ? "О моде, устройстве, как писать темы и палитра Material You телефона. Не меняется."
-                                : p.id.equals(Prompt.SHORT_ID) ? "О моде и устройстве. Не меняется." : p.text,
+                                ? L.t("О моде, устройстве и как писать темы. Не меняется.")
+                                : p.id.equals(Prompt.SHORT_ID) ? L.t("О моде и устройстве. Не меняется.")
+                                : p.id.equals(Prompt.SUPER_ID)
+                                        ? L.t("Всё о MargyC: функции, включённые моды, темы и палитра Material You. Не меняется.")
+                                        : p.text,
                         p.id.equals(current), v -> {
                             try {
                                 Prompt.select(p.id);
@@ -405,7 +416,7 @@ public final class ModsActivity extends Activity {
                             refresh();
                         });
             }
-            sheet.button("Новый пресет", false, () -> editPreset(null, "", ""));
+            sheet.button(L.t("Новый пресет"), false, () -> editPreset(null, "", ""));
             sheet.show();
         } catch (Exception e) {
             Log.e(Mods.TAG, "presets", e);
@@ -417,10 +428,10 @@ public final class ModsActivity extends Activity {
             Prompt.Preset p = Prompt.selected();
             if (p.builtIn()) {
                 final String text = p.text;
-                ui.new Sheet("Пресет «" + p.name + "»")
+                ui.new Sheet(L.t("Пресет «") + p.name + "»")
                         .message(text)
-                        .button("Копия в новый", false, () -> editPreset(null, "Мой пресет", text))
-                        .button("Закрыть", true, null)
+                        .button(L.t("Копия в новый"), false, () -> editPreset(null, L.t("Мой пресет"), text))
+                        .button(L.t("Закрыть"), true, null)
                         .show();
             } else {
                 editPreset(p.id, p.name, p.text);
@@ -431,17 +442,17 @@ public final class ModsActivity extends Activity {
     }
 
     private void editPreset(final String id, String name, String text) {
-        final EditText nameField = ui.field(name, "Название", false);
-        final EditText textField = ui.field(text, "Что Claude должен знать. Лучше по-английски.", true);
+        final EditText nameField = ui.field(name, L.t("Название"), false);
+        final EditText textField = ui.field(text, L.t("Что Claude должен знать. Лучше по-английски."), true);
         LinearLayout box = ui.column();
         box.addView(nameField);
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
         lp.topMargin = ui.dp(12);
         box.addView(textField, lp);
-        Ui.Sheet sheet = ui.new Sheet(id == null ? "Новый пресет" : "Пресет").view(box);
+        Ui.Sheet sheet = ui.new Sheet(id == null ? L.t("Новый пресет") : L.t("Пресет")).view(box);
         if (id != null) {
-            sheet.button("Удалить", false, () -> {
+            sheet.button(L.t("Удалить"), false, () -> {
                 try {
                     Prompt.delete(id);
                 } catch (Exception ignored) {
@@ -449,11 +460,11 @@ public final class ModsActivity extends Activity {
                 refresh();
             });
         }
-        sheet.button("Отмена", false, null);
-        sheet.button("Сохранить", true, () -> {
+        sheet.button(L.t("Отмена"), false, null);
+        sheet.button(L.t("Сохранить"), true, () -> {
             String n = nameField.getText().toString().trim();
             try {
-                String saved = Prompt.save(id, n.isEmpty() ? "Мой пресет" : n, textField.getText().toString());
+                String saved = Prompt.save(id, n.isEmpty() ? L.t("Мой пресет") : n, textField.getText().toString());
                 Prompt.select(saved);
             } catch (Exception e) {
                 Log.e(Mods.TAG, "save preset", e);
@@ -465,7 +476,7 @@ public final class ModsActivity extends Activity {
 
     // ---- пасхалка ----
 
-    /** Кай из «Выдающихся зверей»: десять касаний подряд по подписи внизу. */
+    /** Кай из «Выдающихся зверей»: пять касаний подряд по подписи внизу. */
     private void kai() {
         android.graphics.drawable.Drawable drawable;
         try { // анимированный webp: ImageDecoder отдаёт AnimatedImageDrawable
@@ -489,11 +500,19 @@ public final class ModsActivity extends Activity {
         image.setClipToOutline(true);
         image.setBackground(ui.round(ui.card, 28));
         box.addView(image, new LinearLayout.LayoutParams(ui.dp(240), ui.dp(240)));
-        TextView text = ui.label("Кай одобряет MargyC", 20, Color.WHITE, ui.medium);
+        TextView text = ui.label(L.t("Кай одобряет MargyC"), 20, Color.WHITE, ui.medium);
         text.setGravity(Gravity.CENTER);
         text.setPadding(0, ui.dp(16), 0, 0);
         box.addView(text);
-        box.setOnClickListener(v -> dialog.dismiss());
+        // первые две секунды Кая не закрыть: иначе лишние касания закрывают его сразу
+        final long shown = System.currentTimeMillis();
+        dialog.setCancelable(false);
+        box.setOnClickListener(v -> {
+            if (System.currentTimeMillis() - shown > 2000) {
+                dialog.dismiss();
+            }
+        });
+        box.postDelayed(() -> dialog.setCancelable(true), 2000);
         dialog.setContentView(box);
         android.view.Window w = dialog.getWindow();
         if (w != null) {
@@ -520,8 +539,8 @@ public final class ModsActivity extends Activity {
 
     private View petGroup() {
         LinearLayout g = ui.column();
-        Ui.Row pet = ui.new Row("Clawd на поле ввода",
-                "Сидит на поле ввода в чате и в Code и поднимается вместе с ним. Зажми и тащи, чтобы пересадить, коснись — подпрыгнет.");
+        Ui.Row pet = ui.new Row(L.t("Clawd на поле ввода"),
+                L.t("Сидит на поле ввода в чате и в Code и поднимается вместе с ним. Зажми и тащи, чтобы пересадить, коснись — подпрыгнет."));
         pet.toggle(Pet.enabled(), true, on -> {
             try {
                 Pet.setEnabled(on);
@@ -542,7 +561,7 @@ public final class ModsActivity extends Activity {
         try {
             for (final Fake.Model m : Fake.all()) {
                 Ui.Row row = ui.new Row(m.name, "");
-                row.sub("Отвечает " + Fake.realName(m.base) + (m.description.isEmpty() ? "" : ". " + m.description), 2);
+                row.sub(L.t("Отвечает ") + Fake.realName(m.base) + (m.description.isEmpty() ? "" : ". " + m.description), 2);
                 row.chevron();
                 row.setOnClickListener(v -> editFake(m));
                 fakeGroup.addView(row);
@@ -550,24 +569,24 @@ public final class ModsActivity extends Activity {
         } catch (Exception e) {
             Log.e(Mods.TAG, "fake models", e);
         }
-        Ui.Row add = ui.new Row("Новая модель",
-                "Своя модель сверху в списке моделей, например «Fable 6969». Отвечает настоящая, какую выберешь.");
+        Ui.Row add = ui.new Row(L.t("Новая модель"),
+                L.t("Своя модель сверху в списке моделей, например «Fable 6969». Отвечает настоящая, какую выберешь."));
         add.setOnClickListener(v -> editFake(null));
         fakeGroup.addView(add);
-        Ui.Row paste = ui.new Row("Вставить модель", "Из буфера обмена: модель, которой с тобой поделились.");
+        Ui.Row paste = ui.new Row(L.t("Вставить модель"), L.t("Из буфера обмена: модель, которой с тобой поделились."));
         paste.setOnClickListener(v -> importFake());
         fakeGroup.addView(paste);
-        Ui.Row journal = ui.new Row("Журнал", "Что делали хуки мемных моделей. Если что-то не работает, скопируй и отправь автору.");
+        Ui.Row journal = ui.new Row(L.t("Журнал"), L.t("Что делали хуки мемных моделей. Если что-то не работает, скопируй и отправь автору."));
         journal.chevron();
         journal.setOnClickListener(v -> {
             final String text = Fake.journal();
-            ui.new Sheet("Журнал мемных моделей").message(text)
-                    .button("Скопировать", false, () -> {
+            ui.new Sheet(L.t("Журнал мемных моделей")).message(text)
+                    .button(L.t("Скопировать"), false, () -> {
                         ClipboardManager cm = (ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
                         cm.setPrimaryClip(ClipData.newPlainText("MargyC journal", text));
-                        Toast.makeText(this, "Скопировано", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, L.t("Скопировано"), Toast.LENGTH_SHORT).show();
                     })
-                    .button("Закрыть", true, null).show();
+                    .button(L.t("Закрыть"), true, null).show();
         });
         fakeGroup.addView(journal);
         ui.restyle(fakeGroup);
@@ -577,20 +596,20 @@ public final class ModsActivity extends Activity {
         final java.util.Map<String, String> real = Fake.realModels();
         final String[] base = {m != null ? m.base : real.isEmpty() ? null : real.keySet().iterator().next()};
         if (base[0] == null) {
-            ui.new Sheet("Нет списка моделей")
-                    .message("Мод ещё не видел список моделей Claude. Открой чат, чтобы приложение его загрузило, и возвращайся.")
-                    .button("Понятно", true, null).show();
+            ui.new Sheet(L.t("Нет списка моделей"))
+                    .message(L.t("Мод ещё не видел список моделей Claude. Открой чат, чтобы приложение его загрузило, и возвращайся."))
+                    .button(L.t("Понятно"), true, null).show();
             return;
         }
-        final EditText nameField = ui.field(m != null ? m.name : "", "Название, например Fable 6969", false);
-        final EditText descField = ui.field(m != null ? m.description : "", "Описание под названием", false);
+        final EditText nameField = ui.field(m != null ? m.name : "", L.t("Название, например Fable 6969"), false);
+        final EditText descField = ui.field(m != null ? m.description : "", L.t("Описание под названием"), false);
         final TextView baseField = ui.label("", 16, ui.text, ui.regular);
         baseField.setPadding(ui.dp(16), ui.dp(14), ui.dp(16), ui.dp(14));
         baseField.setBackground(ui.ripple(ui.round(ui.card, 16), 16));
-        final Runnable showBase = () -> baseField.setText("Отвечает: " + Fake.realName(base[0]) + "  ›");
+        final Runnable showBase = () -> baseField.setText(L.t("Отвечает: ") + Fake.realName(base[0]) + "  ›");
         showBase.run();
         baseField.setOnClickListener(v -> {
-            final Ui.Sheet pick = ui.new Sheet("Кто отвечает на самом деле");
+            final Ui.Sheet pick = ui.new Sheet(L.t("Кто отвечает на самом деле"));
             for (final java.util.Map.Entry<String, String> e : real.entrySet()) {
                 pick.item(e.getValue().isEmpty() ? e.getKey() : e.getValue(), e.getKey(), e.getKey().equals(base[0]), x -> {
                     base[0] = e.getKey();
@@ -601,8 +620,8 @@ public final class ModsActivity extends Activity {
             pick.show();
         });
         final EditText promptField = ui.field(m != null ? m.prompt : "",
-                "Системный промпт этой модели, например: ты Fable 6969 и всегда упоминаешь 6969. "
-                        + "Добавляется к промпту мода.", true);
+                L.t("Системный промпт этой модели, например: ты Fable 6969 и всегда упоминаешь 6969. ")
+                        + L.t("Добавляется к промпту мода."), true);
 
         LinearLayout box = ui.column();
         for (View v : new View[] {nameField, descField, baseField, promptField}) {
@@ -611,15 +630,15 @@ public final class ModsActivity extends Activity {
             lp.topMargin = box.getChildCount() == 0 ? 0 : ui.dp(12);
             box.addView(v, lp);
         }
-        Ui.Sheet sheet = ui.new Sheet(m == null ? "Новая модель" : "Мемная модель").view(box);
+        Ui.Sheet sheet = ui.new Sheet(m == null ? L.t("Новая модель") : L.t("Мемная модель")).view(box);
         if (m != null) {
-            sheet.button("Поделиться", false, () -> {
+            sheet.button(L.t("Поделиться"), false, () -> {
                 String text = Fake.export(m);
                 ClipboardManager cm = (ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
                 cm.setPrimaryClip(ClipData.newPlainText("MargyC model", text));
-                ui.new Sheet("Модель скопирована").message(text.trim()).button("Готово", true, null).show();
+                ui.new Sheet(L.t("Модель скопирована")).message(text.trim()).button(L.t("Готово"), true, null).show();
             });
-            sheet.button("Удалить", false, () -> {
+            sheet.button(L.t("Удалить"), false, () -> {
                 try {
                     Fake.delete(m.id);
                 } catch (Exception ignored) {
@@ -628,11 +647,11 @@ public final class ModsActivity extends Activity {
                 Mods.needRestart();
             });
         }
-        sheet.button("Отмена", false, null);
-        sheet.button("Сохранить", true, () -> {
+        sheet.button(L.t("Отмена"), false, null);
+        sheet.button(L.t("Сохранить"), true, () -> {
             String n = nameField.getText().toString().trim();
             try {
-                Fake.save(m != null ? m.id : null, n.isEmpty() ? "Мемная модель" : n,
+                Fake.save(m != null ? m.id : null, n.isEmpty() ? L.t("Мемная модель") : n,
                         descField.getText().toString().trim(), base[0], promptField.getText().toString());
             } catch (Exception e) {
                 Log.e(Mods.TAG, "save fake model", e);
@@ -654,17 +673,17 @@ public final class ModsActivity extends Activity {
             Log.e(Mods.TAG, "import model", e);
         }
         if (n == 0) {
-            ui.new Sheet("Это не модель")
-                    .message("В буфере обмена нет мемной модели. Скопируй её целиком, начиная со строки «MargyC model».")
-                    .button("Понятно", true, null).show();
+            ui.new Sheet(L.t("Это не модель"))
+                    .message(L.t("В буфере обмена нет мемной модели. Скопируй её целиком, начиная со строки «MargyC model»."))
+                    .button(L.t("Понятно"), true, null).show();
             return;
         }
         refresh();
         Mods.needRestart();
-        ui.new Sheet("Модель добавлена")
-                .message((n == 1 ? "Добавлена одна модель." : "Добавлено моделей: " + n + ".")
-                        + " Она появится в списке моделей после перезапуска.")
-                .button("Готово", true, null).show();
+        ui.new Sheet(L.t("Модель добавлена"))
+                .message((n == 1 ? L.t("Добавлена одна модель.") : L.t("Добавлено моделей: ") + n + ".")
+                        + L.t(" Она появится в списке моделей после перезапуска."))
+                .button(L.t("Готово"), true, null).show();
     }
 
     // ---- свои моды ----
@@ -676,7 +695,7 @@ public final class ModsActivity extends Activity {
             Ui.Row row = ui.new Row(info.name, "");
             String sub = (info.author.isEmpty() ? "" : info.author + (info.version.isEmpty() ? "" : " · ") )
                     + (info.version.isEmpty() ? "" : "v" + info.version);
-            sub = (sub.isEmpty() ? "" : sub + "\n") + (error.isEmpty() ? info.description : "Ошибка: " + error);
+            sub = (sub.isEmpty() ? "" : sub + "\n") + (error.isEmpty() ? info.description : L.t("Ошибка: ") + error);
             row.sub(sub.trim(), 3);
             if (!error.isEmpty()) {
                 row.subtitle.setTextColor(Theme.resolve(ui.night ? 0xFFFE8181 : 0xFFB53333, ui.night));
@@ -713,26 +732,133 @@ public final class ModsActivity extends Activity {
             row.setOnClickListener(v -> openPlugin(info));
             pluginGroup.addView(row);
         }
-        Ui.Row install = ui.new Row("Установить мод", "Файл .mcmod: скомпилированный мод с manifest.json.");
+        Ui.Row install = ui.new Row(L.t("Установить мод"), L.t("Файл .mcmod: скомпилированный мод с manifest.json."));
         install.setOnClickListener(v -> {
             Intent pick = new Intent(Intent.ACTION_OPEN_DOCUMENT).addCategory(Intent.CATEGORY_OPENABLE).setType("*/*");
             try {
                 startActivityForResult(pick, PICK_PLUGIN);
             } catch (Exception e) {
-                Toast.makeText(this, "Нет приложения для выбора файла", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, L.t("Нет приложения для выбора файла"), Toast.LENGTH_SHORT).show();
             }
         });
         pluginGroup.addView(install);
-        Ui.Row docs = ui.new Row("Как написать свой мод", "Документация и пример на GitHub.");
+        Ui.Row docs = ui.new Row(L.t("Как написать свой мод"), L.t("Документация и пример на GitHub."));
         docs.chevron();
         docs.setOnClickListener(v -> open(GITHUB + "/blob/main/docs/plugins.md"));
         pluginGroup.addView(docs);
         ui.restyle(pluginGroup);
     }
 
+    // ---- диалоги: скачивание из меню чата и открытие .md ----
+
+    private View dialogsGroup() {
+        LinearLayout g = ui.column();
+        Ui.Row export = ui.new Row(L.t("Скачивание диалогов"),
+                L.t("Пункт «Скачать диалог (.md)» в меню «⋮» чата. Файл сохраняется в Загрузки/MargyC."));
+        export.toggle(Export.enabled(), true, on -> {
+            try {
+                Export.setEnabled(on);
+                return true;
+            } catch (Exception e) {
+                return false;
+            }
+        });
+        g.addView(export);
+        Ui.Row open = ui.new Row(L.t("Открыть диалог .md"),
+                L.t("Экспорт MargyC или любой .md с заголовками «## Ты» / «## Claude»: посмотреть как чат и продолжить в Claude."));
+        open.chevron();
+        open.setOnClickListener(v -> {
+            Intent pick = new Intent(Intent.ACTION_OPEN_DOCUMENT).addCategory(Intent.CATEGORY_OPENABLE).setType("*/*");
+            try {
+                startActivityForResult(pick, PICK_MD);
+            } catch (Exception e) {
+                Toast.makeText(this, L.t("Нет приложения для выбора файла"), Toast.LENGTH_SHORT).show();
+            }
+        });
+        g.addView(open);
+        ui.restyle(g);
+        return g;
+    }
+
+    /** Диалог из .md как чат: твои сообщения справа пузырями, Claude слева, как в приложении. */
+    private void showChat(final String md) {
+        Export.Conversation c = Export.parse(md);
+        final android.app.Dialog dialog = new android.app.Dialog(this, android.R.style.Theme_DeviceDefault_NoActionBar);
+        LinearLayout list = ui.column();
+        list.setPadding(ui.dp(16), ui.dp(8), ui.dp(16), ui.dp(24));
+        TextView count = ui.label(L.t("Сообщений: ") + c.messages.size(), 14, ui.secondary, ui.regular);
+        count.setGravity(Gravity.CENTER);
+        count.setPadding(0, 0, 0, ui.dp(12));
+        list.addView(count);
+        for (Export.Message m : c.messages) {
+            boolean me = Export.isUser(m.sender);
+            TextView t = ui.label(m.text, 16, ui.text, me ? ui.regular : ui.regular);
+            t.setLineSpacing(ui.dp(4), 1f);
+            t.setTextIsSelectable(true);
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                    me ? LinearLayout.LayoutParams.WRAP_CONTENT : LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT);
+            lp.topMargin = ui.dp(me ? 16 : 10);
+            if (me) {
+                t.setPadding(ui.dp(16), ui.dp(12), ui.dp(16), ui.dp(12));
+                t.setBackground(ui.round(ui.card, 20));
+                t.setMaxWidth(Math.round(getResources().getDisplayMetrics().widthPixels * 0.8f));
+                lp.gravity = Gravity.END;
+            } else {
+                t.setPadding(ui.dp(4), 0, ui.dp(4), 0);
+            }
+            list.addView(t, lp);
+        }
+        LinearLayout box = ui.column();
+        box.addView(list);
+        LinearLayout actions = new LinearLayout(this);
+        actions.setGravity(Gravity.CENTER);
+        actions.setPadding(0, ui.dp(8), 0, ui.dp(8));
+        TextView cont = ui.label(L.t("Продолжить в Claude"), 16, ui.bg, ui.medium);
+        cont.setGravity(Gravity.CENTER);
+        cont.setPadding(ui.dp(24), 0, ui.dp(24), 0);
+        cont.setBackground(ui.ripple(ui.round(ui.text, 24), 24));
+        cont.setOnClickListener(v -> {
+            Intent send = new Intent(Intent.ACTION_SEND).setType("text/plain").setPackage(getPackageName())
+                    .putExtra(Intent.EXTRA_TEXT, L.t("Это предыдущий диалог, продолжим его. Вот он целиком:") + "\n\n" + md);
+            try {
+                startActivity(send);
+                dialog.dismiss();
+            } catch (Exception e) {
+                Toast.makeText(this, String.valueOf(e), Toast.LENGTH_LONG).show();
+            }
+        });
+        actions.addView(cont, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, ui.dp(48)));
+        box.addView(actions);
+        View screen = ui.screen(this, c.title.isEmpty() ? "Claude" : c.title, box);
+        dialog.setContentView(screen);
+        android.view.Window w = dialog.getWindow();
+        if (w != null) {
+            ui.setupDialogWindow(w);
+        }
+        // стрелка «назад» экрана закрывает Activity — здесь она должна закрыть окно
+        screen.findViewWithTag("back").setOnClickListener(v -> dialog.dismiss());
+        dialog.show();
+    }
+
     @Override
     protected void onActivityResult(int request, int result, Intent data) {
         super.onActivityResult(request, result, data);
+        if (request == PICK_MD && result == RESULT_OK && data != null && data.getData() != null) {
+            try (java.io.InputStream in = getContentResolver().openInputStream(data.getData())) {
+                java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();
+                byte[] buf = new byte[8192];
+                int n;
+                while ((n = in.read(buf)) > 0) {
+                    out.write(buf, 0, n);
+                }
+                showChat(out.toString("UTF-8"));
+            } catch (Exception e) {
+                Log.e(Mods.TAG, "open md", e);
+                Toast.makeText(this, L.t("Не получилось открыть файл"), Toast.LENGTH_SHORT).show();
+            }
+            return;
+        }
         if (request != PICK_PLUGIN || result != RESULT_OK || data == null || data.getData() == null) {
             return;
         }
@@ -741,15 +867,15 @@ public final class ModsActivity extends Activity {
             Plugins.setEnabled(info.id, true);
             Mods.needRestart();
             refresh();
-            ui.new Sheet("Мод установлен")
-                    .message(info.name + (info.author.isEmpty() ? "" : " от " + info.author)
-                            + ". Он заработает после перезапуска Claude.")
-                    .button("Готово", true, null).show();
+            ui.new Sheet(L.t("Мод установлен"))
+                    .message(info.name + (info.author.isEmpty() ? "" : L.t(" от ") + info.author)
+                            + L.t(". Он заработает после перезапуска Claude."))
+                    .button(L.t("Готово"), true, null).show();
         } catch (Exception e) {
             Log.e(Mods.TAG, "install plugin", e);
-            ui.new Sheet("Это не мод")
-                    .message("Не получилось установить: " + e.getMessage())
-                    .button("Понятно", true, null).show();
+            ui.new Sheet(L.t("Это не мод"))
+                    .message(L.t("Не получилось установить: ") + e.getMessage())
+                    .button(L.t("Понятно"), true, null).show();
         }
     }
 
@@ -833,10 +959,10 @@ public final class ModsActivity extends Activity {
             box.addView(group, gl);
         }
         Ui.Sheet sheet = ui.new Sheet(info.name).view(box);
-        sheet.button("Удалить", false, () -> ui.new Sheet("Удалить мод?")
-                .message(info.name + " пропадёт после перезапуска Claude.")
-                .button("Отмена", false, null)
-                .button("Удалить", true, () -> {
+        sheet.button(L.t("Удалить"), false, () -> ui.new Sheet(L.t("Удалить мод?"))
+                .message(info.name + L.t(" пропадёт после перезапуска Claude."))
+                .button(L.t("Отмена"), false, null)
+                .button(L.t("Удалить"), true, () -> {
                     try {
                         Plugins.uninstall(this, info);
                     } catch (Exception e) {
@@ -846,10 +972,10 @@ public final class ModsActivity extends Activity {
                     refresh();
                 }).show());
         if (savers.isEmpty()) {
-            sheet.button("Готово", true, null);
+            sheet.button(L.t("Готово"), true, null);
         } else {
-            sheet.button("Отмена", false, null);
-            sheet.button("Сохранить", true, () -> {
+            sheet.button(L.t("Отмена"), false, null);
+            sheet.button(L.t("Сохранить"), true, () -> {
                 for (Runnable r : savers) {
                     r.run();
                 }
@@ -885,8 +1011,8 @@ public final class ModsActivity extends Activity {
             Log.e(Mods.TAG, "refresh", e);
         }
         accentRow.sub(Theme.accentOn()
-                ? String.format("#%06X. Заменяет оранжевый и синий цвет выбора во всём приложении.", Theme.accent() & 0xFFFFFF)
-                : "Заменяет оранжевый и синий цвет выбора во всём приложении.", 3);
+                ? String.format(L.t("#%06X. Заменяет оранжевый и синий цвет выбора во всём приложении."), Theme.accent() & 0xFFFFFF)
+                : L.t("Заменяет оранжевый и синий цвет выбора во всём приложении."), 3);
         accentSwatch.setBackground(ui.round(Theme.accent(), 14));
         accentSwatch.setVisibility(Theme.accentOn() ? View.VISIBLE : View.GONE);
         darkRow.sub(count(true), 1);
@@ -895,6 +1021,6 @@ public final class ModsActivity extends Activity {
 
     private String count(boolean dark) {
         int n = Theme.overrides(dark).size();
-        return n == 0 ? "Как в Claude" : "Изменено цветов: " + n;
+        return n == 0 ? L.t("Как в Claude") : L.t("Изменено цветов: ") + n;
     }
 }

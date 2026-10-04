@@ -313,7 +313,7 @@ public final class Fake {
         for (String line : journal) {
             sb.append(line).append('\n');
         }
-        return sb.length() == 0 ? "Пока пусто." : sb.toString();
+        return sb.length() == 0 ? L.t("Пока пусто.") : sb.toString();
     }
 
     /** Класс, который позвал хук (обфусцированное имя, для журнала). */
