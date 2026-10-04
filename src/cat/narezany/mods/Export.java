@@ -114,6 +114,25 @@ public final class Export {
         }
     }
 
+    private static Object zero(Class<?> t) {
+        if (t == boolean.class) {
+            return Boolean.FALSE;
+        }
+        if (t == int.class) {
+            return 0;
+        }
+        if (t == long.class) {
+            return 0L;
+        }
+        if (t == float.class) {
+            return 0f;
+        }
+        if (t == double.class) {
+            return 0d;
+        }
+        return null;
+    }
+
     /** Свой пункт той же Compose-функцией пункта меню, что и пункты приложения. */
     private static void draw(Object composer, Object onClick) throws Exception {
         if (!enabled() || Names.MENU_ITEM.isEmpty()) {
@@ -140,11 +159,13 @@ public final class Export {
         int composerIndex = -1;
         for (int i = 0; i < types.length; i++) {
             Class<?> t = types[i];
-            args[i] = t == boolean.class ? Boolean.FALSE : t == int.class ? Integer.valueOf(0)
-                    : t == long.class ? Long.valueOf(0) : t == float.class ? Float.valueOf(0) : null;
+            args[i] = zero(t); // не тернарником: Long/Float в нём распаковывают null
             if (i > 1 && composerIndex < 0 && t.isInstance(composer)) {
                 composerIndex = i;
             }
+        }
+        if (composerIndex < 0 || types.length < 4 || types[0] != String.class) {
+            return; // сигнатура пункта не та, что ждали: лучше без пункта, чем вылет
         }
         args[0] = L.t("Скачать диалог (.md)");
         args[1] = onClick;
