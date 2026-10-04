@@ -540,7 +540,7 @@ public final class ModsActivity extends Activity {
     private View petGroup() {
         LinearLayout g = ui.column();
         Ui.Row pet = ui.new Row(L.t("Clawd на поле ввода"),
-                L.t("Сидит на поле ввода в чате и в Code и поднимается вместе с ним. Зажми и тащи, чтобы пересадить, коснись — подпрыгнет."));
+                L.t("Сидит на поле ввода в чате и в Code и поднимается вместе с ним. Зажми и тащи, чтобы пересадить, коснись — анимация заново."));
         pet.toggle(Pet.enabled(), true, on -> {
             try {
                 Pet.setEnabled(on);
@@ -646,6 +646,7 @@ public final class ModsActivity extends Activity {
                 refresh();
                 Mods.needRestart();
             });
+            sheet.breakLine();
         }
         sheet.button(L.t("Отмена"), false, null);
         sheet.button(L.t("Сохранить"), true, () -> {

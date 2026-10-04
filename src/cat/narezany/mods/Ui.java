@@ -338,7 +338,7 @@ final class Ui {
     final class Sheet {
         final Dialog dialog;
         final LinearLayout body;
-        private LinearLayout buttons;
+        private Flow buttons;
 
         Sheet(String title) {
             dialog = new Dialog(ctx);
@@ -395,10 +395,10 @@ final class Ui {
         /** Кнопки справа: основная — светлая «таблетка», как «Новый проект» в приложении. */
         Sheet button(String label, boolean primary, final Runnable action) {
             if (buttons == null) {
-                buttons = new LinearLayout(ctx);
-                buttons.setGravity(Gravity.END | Gravity.CENTER_VERTICAL);
+                buttons = new Flow(ctx, dp(8));
                 buttons.setPadding(0, dp(16), 0, dp(4));
-                body.addView(buttons);
+                body.addView(buttons, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+                        ViewGroup.LayoutParams.WRAP_CONTENT));
             }
             TextView b = Ui.this.label(label, 16, primary ? bg : text, medium);
             b.setGravity(Gravity.CENTER);
@@ -410,11 +410,24 @@ final class Ui {
                 }
                 dialog.dismiss();
             });
-            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, dp(44));
-            lp.leftMargin = dp(8);
-            buttons.addView(b, lp);
+            if (pendingBreak) {
+                b.setTag(Flow.BREAK);
+                pendingBreak = false;
+            }
+            buttons.addView(b, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, dp(44)));
             return this;
         }
+
+        /** Следующие кнопки — с новой строки. */
+        Sheet breakLine() {
+            if (buttons != null && buttons.getChildCount() > 0) {
+                buttons.getChildAt(buttons.getChildCount() - 1).setTag(null);
+                pendingBreak = true;
+            }
+            return this;
+        }
+
+        private boolean pendingBreak;
 
         Dialog show() {
             ScrollView scroll = new ScrollView(ctx);
@@ -555,6 +568,63 @@ final class Ui {
         sheet.button(L.t("Отмена"), false, null);
         sheet.button(L.t("Готово"), true, () -> listener.onColor(current[0]));
         sheet.show();
+    }
+
+    /** Кнопки окна: в строку справа, что не влезло — на следующую строку (порядок сохраняется). */
+    static final class Flow extends ViewGroup {
+        static final String BREAK = "break";
+        private final int gap;
+
+        Flow(Context ctx, int gap) {
+            super(ctx);
+            this.gap = gap;
+        }
+
+        @Override
+        protected void onMeasure(int widthSpec, int heightSpec) {
+            int width = MeasureSpec.getSize(widthSpec) - getPaddingLeft() - getPaddingRight();
+            int x = 0, lineHeight = 0, height = 0;
+            for (int i = 0; i < getChildCount(); i++) {
+                View c = getChildAt(i);
+                measureChild(c, MeasureSpec.makeMeasureSpec(width, MeasureSpec.AT_MOST), heightSpec);
+                if (x > 0 && (x + gap + c.getMeasuredWidth() > width || BREAK.equals(c.getTag()))) {
+                    height += lineHeight + gap;
+                    x = 0;
+                    lineHeight = 0;
+                }
+                x += (x > 0 ? gap : 0) + c.getMeasuredWidth();
+                lineHeight = Math.max(lineHeight, c.getMeasuredHeight());
+            }
+            height += lineHeight + getPaddingTop() + getPaddingBottom();
+            setMeasuredDimension(MeasureSpec.getSize(widthSpec), height);
+        }
+
+        @Override
+        protected void onLayout(boolean changed, int l, int t, int r, int b) {
+            int width = r - l - getPaddingLeft() - getPaddingRight();
+            int y = getPaddingTop(), i = 0;
+            while (i < getChildCount()) {
+                // строка: сколько влезает, выравнивание по правому краю
+                int j = i, lineWidth = 0, lineHeight = 0;
+                while (j < getChildCount()) {
+                    int w = getChildAt(j).getMeasuredWidth();
+                    if (j > i && (lineWidth + gap + w > width || BREAK.equals(getChildAt(j).getTag()))) {
+                        break;
+                    }
+                    lineWidth += (j > i ? gap : 0) + w;
+                    lineHeight = Math.max(lineHeight, getChildAt(j).getMeasuredHeight());
+                    j++;
+                }
+                int x = getPaddingLeft() + width - lineWidth;
+                for (int k = i; k < j; k++) {
+                    View c = getChildAt(k);
+                    c.layout(x, y, x + c.getMeasuredWidth(), y + c.getMeasuredHeight());
+                    x += c.getMeasuredWidth() + gap;
+                }
+                y += lineHeight + gap;
+                i = j;
+            }
+        }
     }
 
     // ---- рисованные элементы ----

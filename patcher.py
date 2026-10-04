@@ -809,58 +809,156 @@ def find_clawd(sm):
     return names
 
 
+def _signature(header):
+    """Статический ли метод и типы его параметров, по строке .method."""
+    m = re.match(r"\.method (.*?)([\w<>$]+)\(([^)]*)\)", header)
+    return " static " in f" {m.group(1)} ", PARAM.findall(m.group(3))
+
+
+def _preg(static, types, i):
+    """Регистр параметра i метода: p0 — this у нестатических, J и D занимают два регистра."""
+    return f"p{(0 if static else 1) + sum(2 if t in ('J', 'D') else 1 for t in types[:i])}"
+
+
+def _range_regs(first, last):
+    return [f"v{i}" for i in range(int(first[1:]), int(last[1:]) + 1)]
+
+
+ITEM_CALL = (r"invoke-static/range \{(\w+) \.\. (\w+)\}, (L[^;]+;)->(\w+)\((Ljava/lang/String;[^)]*)\)V\n")
+
+
+def _defaults(text, reg):
+    """Маска параметров по умолчанию — константа в последнем регистре диапазона вызова пункта."""
+    vals = re.findall(r"const(?:/16|/4)? " + reg + r", (-?0x[0-9a-f]+)\n", text)
+    return str(int(vals[-1], 16)) if vals else "0"
+
+
+def _owners(method, header, skip_type, call):
+    """В начало метода: Export.<call>(p) для лямбды (this, в нём захваченные поля) и каждого объектного
+    параметра, кроме композера и обобщённых Object-параметров лямбд (первый вызов сбрасывает список)."""
+    static, types = _signature(header)
+    regs = [] if static else ["p0"]
+    regs += [_preg(static, types, i) for i, t in enumerate(types)
+             if t.startswith("L") and t not in (skip_type, "Ljava/lang/String;", "Ljava/lang/Object;")]
+    lines, first = [], True
+    for r in regs:
+        lines.append(f"    invoke-static/range {{{r} .. {r}}}, {MOD}Export;->{call if first else call + 'Also'}"
+                     "(Ljava/lang/Object;)V\n")
+        first = False
+    return re.sub(r"(\.locals \d+\n)", lambda x: x.group(1) + "\n" + "\n".join(lines), method, count=1)
+
+
 def patch_chat_menu(sm, dec):
-    """Пункт «Скачать .md» в меню «⋮» чата. Меню — Compose-лямбда (Function3), пункты рисуются прямыми
-    вызовами item(label, onClick, modifier, painter, ...). Место — сразу после пункта «На главный экран»
-    (add_to_home): там, где обе ветки его if сходятся, зовём Export.menu(composer), а в начале лямбды
-    запоминаем её саму (Export.owner), из неё мод достаёт uuid беседы. Возвращает имена для Names.java."""
+    """Пункт «Скачать .md» в меню «⋮» чата и сессии Code.
+
+    Чат: пункт «На главный экран» (add_to_home) — своя Compose-функция item(label, onClick, modifier, painter, ...).
+    Её зовёт статическая функция всего меню; после этого вызова, там, где ветки сходятся, зовём
+    Export.menu(composer), а в начале меню запоминаем его параметры-лямбды: в них uuid беседы.
+    Code: пункты рисует функция меню сессии по одному; после пункта «Поделиться» (session_menu_share)
+    зовём Export.codeMenu(composer), параметры функции (onClick пункта) — Export.codeOwner.
+    Возвращает имена для Names.java."""
     names = {"MENU_ITEM": "", "MENU_ITEM_METHOD": "", "MENU_DEFAULTS": "0", "PAINTER": "", "PAINTER_METHOD": "",
              "ICON": ""}
-    m = re.search(r'name="add_to_home" id="(0x[0-9a-f]+)"', (dec / "res/values/public.xml").read_text())
-    if not m:
-        log("  меню чата: нет строки add_to_home, пункта .md не будет")
-        return names
-    rid = m.group(1)
-    block = re.compile(r"const (\w+), " + rid + r"\n[\s\S]{0,600}?invoke-static \{(\w+), (\w+)\}, (L[^;]+;)->(\w+)\((L[^;]+;)(L[^;]+;)\)L[^;]+;"
-                       r"[\s\S]{0,2500}?const(?:/16)? \w+, (0x[0-9a-f]+)\n\s+invoke-static/range \{(\w+) \.\. (\w+)\}, (L[^;]+;)->(\w+)"
-                       r"\((Ljava/lang/String;[^)]*)\)V\n([\s\S]{0,400}?)goto(?:/16)? (:goto_\w+)\n")
+    public = (dec / "res/values/public.xml").read_text()
+
+    # ---- чат ----
+    m = re.search(r'name="add_to_home" id="(0x[0-9a-f]+)"', public)
+    candidates, composer_type = [], None
+    if m:
+        rid = m.group(1)
+        block = re.compile(r"const \w+, " + rid + r"\n[\s\S]{0,600}?invoke-static \{\w+, \w+\}, (L[^;]+;)->(\w+)"
+                           r"\((L[^;]+;)(L[^;]+;)\)L[^;]+;[\s\S]{0,2500}?" + ITEM_CALL)
+        for f in sm.files_with(f", {rid}"):
+            for method in re.split(r"(?=^\.method )", f.read_text(), flags=re.M):
+                mm = block.search(method)
+                if not mm:
+                    continue
+                header = method.split("\n", 1)[0]
+                static, types = _signature(header)
+                name = re.match(r"\.method .*?([\w<>$]+)\(", header).group(1)
+                candidates.append(f"{class_of(f)}->{name}({''.join(types)})V")
+                composer_type = mm.group(4)
+                names.update(PAINTER=mm.group(1), PAINTER_METHOD=mm.group(2), ICON=mm.group(3),
+                             MENU_ITEM=mm.group(7), MENU_ITEM_METHOD=mm.group(8),
+                             MENU_DEFAULTS=_defaults(mm.group(0), mm.group(6)))
     hooked = 0
-    for f in sm.files_with(f", {rid}"):
-        s = f.read_text()
-        out, changed = [], False
-        for method in re.split(r"(?=^\.method )", s, flags=re.M):
-            header = method.split("\n", 1)[0]
-            mm = block.search(method) if "(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;" in header else None
-            if not mm:
+    for item_fn in candidates:  # функция пункта: та, которую зовёт статическая функция меню
+        if hooked:
+            break
+        call = re.compile(r"invoke-\w+(?:/range)? \{([^}]*)\}, " + re.escape(item_fn) + r"\n([\s\S]{0,600}?)"
+                          r"goto(?:/16)? (:goto_\w+)\n")
+        for f in sm.files_with(item_fn):
+            text = f.read_text()
+            out, changed = [], False
+            for method in re.split(r"(?=^\.method )", text, flags=re.M):
+                header = method.split("\n", 1)[0]
+                mm = call.search(method)
+                if not mm or " static " not in f" {header} ":
+                    out.append(method)  # нестатические вызовы — перезапуск самой функции пункта
+                    continue
+                args = mm.group(1).split(", ") if " .. " not in mm.group(1) else _range_regs(*mm.group(1).split(" .. "))
+                _, types = _signature(".method static x(" + item_fn.split("(", 1)[1].split(")")[0] + ")V")
+                instance = 0 if "invoke-static" in mm.group(0) else 1
+                composer = args[instance + types.index(composer_type)]
+                hook = f"    invoke-static/range {{{composer} .. {composer}}}, {MOD}Export;->menu(Ljava/lang/Object;)V\n\n"
+                method = re.sub(r"(\n\s*" + re.escape(mm.group(3)) + r"\n)", lambda x: x.group(1) + hook, method, count=1)
+                method = _owners(method, header, composer_type, "owner")
                 out.append(method)
-                continue
-            composer_type = mm.group(7)
-            params = PARAM.findall(mm.group(13))
-            if composer_type not in params:
-                out.append(method)
-                continue
-            # регистр композера после вызова пункта: move-object vX, vComposer, иначе тот, что в диапазоне
-            first = int(mm.group(9)[1:])
-            in_range = f"v{first + sum(2 if t in ('J', 'D') else 1 for t in params[:params.index(composer_type)])}"
-            mv = re.search(r"move-object(?:/from16)? (\w+), " + in_range + r"\n", mm.group(14))
-            composer = mv.group(1) if mv else in_range
-            label = mm.group(15)
-            hook = (f"    invoke-static/range {{{composer} .. {composer}}}, {MOD}Export;->menu(Ljava/lang/Object;)V\n\n")
-            method = re.sub(r"(\n\s*" + re.escape(label) + r"\n)", lambda x: x.group(1) + hook, method, count=1)
-            method = re.sub(r"(\.locals \d+\n)", r"\1\n    invoke-static/range {p0 .. p0}, " + MOD
-                            + r"Export;->owner(Ljava/lang/Object;)V\n", method, count=1)
-            # маска параметров по умолчанию — последний регистр диапазона вызова
-            defaults = re.findall(r"const(?:/16|/4)? " + mm.group(10) + r", (-?0x[0-9a-f]+)\n", mm.group(0))
-            names.update(MENU_ITEM=mm.group(11), MENU_ITEM_METHOD=mm.group(12),
-                         MENU_DEFAULTS=str(int(defaults[-1], 16)) if defaults else "0",
-                         PAINTER=mm.group(4), PAINTER_METHOD=mm.group(5), ICON=mm.group(6))
-            out.append(method)
-            changed = True
-            hooked += 1
-        if changed:
-            f.write_text("".join(out))
+                changed = True
+                hooked += 1
+            if changed:
+                f.write_text("".join(out))
     log(f"  меню чата: пункт .md {'добавлен' if hooked else 'не добавлен (не нашёл место)'}")
+
+    # ---- Code ----
+    m = re.search(r'name="session_menu_share" id="(0x[0-9a-f]+)"', public)
+    code = 0
+    if m and composer_type:
+        rid = m.group(1)
+        block = re.compile(r"const \w+, " + rid + r"\n[\s\S]{0,1200}?" + ITEM_CALL + r"([\s\S]{0,300}?)(goto(?:/16)? :goto_\w+\n)")
+        for f in sm.files_with(f", {rid}"):
+            text = f.read_text()
+            out, changed = [], False
+            for method in re.split(r"(?=^\.method )", text, flags=re.M):
+                mm = block.search(method)
+                header = method.split("\n", 1)[0]
+                types = PARAM.findall(mm.group(5)) if mm else []
+                if not mm or composer_type not in types:
+                    out.append(method)
+                    continue
+                composer = _range_regs(mm.group(1), mm.group(2))[types.index(composer_type)]
+                hook = f"invoke-static/range {{{composer} .. {composer}}}, {MOD}Export;->codeMenu(Ljava/lang/Object;)V\n\n    "
+                pos = mm.start(7)
+                method = method[:pos] + hook + method[pos:]
+                method = _owners(method, header, composer_type, "codeOwner")
+                out.append(method)
+                changed = True
+                code += 1
+            if changed:
+                f.write_text("".join(out))
+    log(f"  меню Code: пункт .md {'добавлен' if code else 'не добавлен (не нашёл место)'}")
+
+    # ---- классы событий сессии Code для выгрузки ----
+    names.update(session_names(sm))
     return names
+
+
+def session_names(sm):
+    """Классы и поля событий сессии Code (kotlinx.serialization), из которых собирается переписка."""
+    base = "com.anthropic.claude.sessions.types."
+    out = {"SESSION_EVENT": {}, "SESSION_ASSISTANT": {}, "SESSION_USER": {}, "SESSION_TEXT": {}, "SESSION_USER_TEXT": {}}
+    try:
+        for key, serial, fields in (("SESSION_EVENT", "SdkMessageEvent", ("message",)),
+                                    ("SESSION_ASSISTANT", "SdkAssistantMessage", ("content",)),
+                                    ("SESSION_USER", "SdkNonAssistantMessage", ("role", "content")),
+                                    ("SESSION_TEXT", "ContentBlock.Text", ("text",)),
+                                    ("SESSION_USER_TEXT", "ApiUserMessageContent.Text", ("text",))):
+            ser = Serial(sm, base + serial)
+            out[key] = dict(cls=ser.cls[1:-1].replace("/", "."), **ser.fields(*fields))
+    except PatchError as e:
+        log(f"  события Code не разобраны ({e}), выгрузки Code не будет")
+        return {k: {} for k in out}
+    return out
 
 
 def patch_google_login(sm, dec, function0):

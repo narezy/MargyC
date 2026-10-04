@@ -97,8 +97,8 @@ final class L {
         put("Сохранить", "Save");
         put("Кай одобряет MargyC", "Kai approves MargyC");
         put("Clawd на поле ввода", "Clawd on the message box");
-        put("Сидит на поле ввода в чате и в Code и поднимается вместе с ним. Зажми и тащи, чтобы пересадить, коснись — подпрыгнет.",
-                "Sits on the message box in chat and Code and rises with it. Hold and drag to move him, tap to make him jump.");
+        put("Сидит на поле ввода в чате и в Code и поднимается вместе с ним. Зажми и тащи, чтобы пересадить, коснись — анимация заново.",
+                "Sits on the message box in chat and Code and rises with it. Hold and drag to move him, tap to replay his animation.");
         put("Отвечает ", "Answered by ");
         put("Новая модель", "New model");
         put("Своя модель сверху в списке моделей, например «Fable 6969». Отвечает настоящая, какую выберешь.",
@@ -215,6 +215,7 @@ final class L {
         put("Сохранено: Загрузки/MargyC/", "Saved: Downloads/MargyC/");
         put("Не получилось сохранить: ", "Couldn't save: ");
         put("Размышления", "Thinking");
+        put("Не нашёл переписку этой сессии. Открой её и попробуй ещё раз.", "Couldn't find this session's messages. Open it and try again.");
         put("Ты", "You");
     }
 }

@@ -29,7 +29,7 @@ import java.util.List;
 /**
  * Мод «Clawd»: питомец сидит на верхней границе поля ввода в чате и в Code, справа. Если поле
  * растёт от длинного сообщения, Clawd поднимается вместе с ним; зажать и потащить — пересесть
- * (вдоль поля и немного выше-ниже), коснуться — подпрыгнет.
+ * (вдоль поля и немного выше-ниже), коснуться — анимация заново.
  *
  * Сам Clawd — Compose-функция приложения с его анимациями (та, что на экранах загрузки), её рисует
  * ComposeView мода. Если она не нашлась или упала, рисуется свой пиксельный Clawd.
@@ -436,7 +436,7 @@ public final class Pet {
         return null;
     }
 
-    /** Clawd: зажать и тащить (вдоль поля и немного выше-ниже), короткое касание — подпрыгнуть. */
+    /** Clawd: зажать и тащить (вдоль поля и немного выше-ниже), короткое касание — анимация сначала. */
     static final class Box extends FrameLayout {
         boolean dragging;
         private float downX, downY, startX, startY;
@@ -488,9 +488,11 @@ public final class Pet {
                         } catch (Exception ignored) {
                         }
                     } else if (e.getActionMasked() == MotionEvent.ACTION_UP) {
-                        View c = getChildAt(0);
-                        c.animate().translationY(-getHeight() * 0.35f).setDuration(140)
-                                .withEndAction(() -> c.animate().translationY(0).setDuration(180).start()).start();
+                        // касание — Clawd заново играет свою анимацию: новый ComposeView начинает её сначала
+                        View old = getChildAt(0);
+                        android.view.ViewGroup.LayoutParams lp = old.getLayoutParams();
+                        removeView(old);
+                        addView(clawd(getContext()), lp);
                     }
                     return true;
                 default:
