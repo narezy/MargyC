@@ -89,5 +89,7 @@ the result will not install over a MargyC signed with another key.
 - Telegram channel: [@margyclaude](https://t.me/margyclaude)
 - Author: [@narezany](https://t.me/narezany)
 
+<sub>Icons on the Mods screen: [Material Icons](https://github.com/google/material-design-icons) by Google, Apache License 2.0.</sub>
+
 <sub>MargyC is an unofficial fan modification. It is not affiliated with, endorsed by or supported by
 Anthropic. Claude is a trademark of Anthropic. Use at your own risk.</sub>

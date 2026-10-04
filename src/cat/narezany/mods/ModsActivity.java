@@ -29,6 +29,11 @@ public final class ModsActivity extends Activity {
     private View accentSwatch;
     private LinearLayout fakeGroup, pluginGroup;
     private static final int PICK_PLUGIN = 7, PICK_MD = 8;
+    // кодовые точки Material Icons (Round), шрифт в app-assets
+    private static final int IC_LANG = 0xe8e2, IC_ACCENT = 0xe40a, IC_THEME = 0xe243, IC_DARK = 0xe51c,
+            IC_LIGHT = 0xe518, IC_COPY = 0xf08a, IC_PASTE = 0xf098, IC_AUTHOR = 0xe0b7, IC_PROMPT = 0xea4a,
+            IC_PRESET = 0xe429, IC_PRESET_TEXT = 0xf1c6, IC_PET = 0xe91d, IC_ADD = 0xe145, IC_JOURNAL = 0xe889,
+            IC_INSTALL = 0xe87b, IC_DOCS = 0xea19, IC_DOWNLOAD = 0xf090, IC_OPEN = 0xe873;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -111,6 +116,7 @@ public final class ModsActivity extends Activity {
             Toast.makeText(this, L.t("Не получилось сменить язык"), Toast.LENGTH_SHORT).show();
             return false;
         });
+        ru.icon(IC_LANG);
         g.addView(ru);
         ui.restyle(g);
         return g;
@@ -122,6 +128,7 @@ public final class ModsActivity extends Activity {
         final LinearLayout g = ui.column();
 
         accentRow = ui.new Row(L.t("Акцентный цвет"), "");
+        accentRow.icon(IC_ACCENT);
         accentSwatch = accentRow.swatch(Theme.accent());
         accentRow.toggle(Theme.accentOn(), true, on -> {
             try {
@@ -153,13 +160,16 @@ public final class ModsActivity extends Activity {
                 return false;
             }
         });
+        custom.icon(IC_THEME);
         g.addView(custom);
 
         darkRow = ui.new Row(L.t("Тёмная тема"), "");
+        darkRow.icon(IC_DARK);
         darkRow.chevron();
         darkRow.setOnClickListener(v -> openTheme(true));
         g.addView(darkRow);
         lightRow = ui.new Row(L.t("Светлая тема"), "");
+        lightRow.icon(IC_LIGHT);
         lightRow.chevron();
         lightRow.setOnClickListener(v -> openTheme(false));
         g.addView(lightRow);
@@ -195,9 +205,11 @@ public final class ModsActivity extends Activity {
             cm.setPrimaryClip(ClipData.newPlainText("MargyC theme", theme));
             ui.new Sheet(L.t("Тема скопирована")).message(theme.trim()).button(L.t("Готово"), true, null).show();
         });
+        copy.icon(IC_COPY);
         g.addView(copy);
         Ui.Row paste = ui.new Row(L.t("Вставить тему"), L.t("Из буфера обмена. Тему может написать и Claude, просто попроси."));
         paste.setOnClickListener(v -> importTheme());
+        paste.icon(IC_PASTE);
         g.addView(paste);
         ui.restyle(g);
         return g;
@@ -250,6 +262,7 @@ public final class ModsActivity extends Activity {
         LinearLayout.LayoutParams al = new LinearLayout.LayoutParams(ui.dp(40), ui.dp(40));
         al.rightMargin = ui.dp(16);
         author.addView(avatar, 0, al);
+        author.icon(IC_AUTHOR);
         author.chevron();
         author.setOnClickListener(v -> open("https://t.me/narezany"));
         authorBox.addView(author);
@@ -378,14 +391,17 @@ public final class ModsActivity extends Activity {
                 return false;
             }
         });
+        prompt.icon(IC_PROMPT);
         g.addView(prompt);
 
         presetRow = ui.new Row(L.t("Пресет"), "");
+        presetRow.icon(IC_PRESET);
         presetRow.chevron();
         presetRow.setOnClickListener(v -> choosePreset());
         g.addView(presetRow);
 
         presetTextRow = ui.new Row(L.t("Текст пресета"), "");
+        presetTextRow.icon(IC_PRESET_TEXT);
         presetTextRow.chevron();
         presetTextRow.setOnClickListener(v -> openPreset());
         g.addView(presetTextRow);
@@ -549,6 +565,7 @@ public final class ModsActivity extends Activity {
                 return false;
             }
         });
+        pet.icon(IC_PET);
         g.addView(pet);
         ui.restyle(g);
         return g;
@@ -572,9 +589,11 @@ public final class ModsActivity extends Activity {
         Ui.Row add = ui.new Row(L.t("Новая модель"),
                 L.t("Своя модель сверху в списке моделей, например «Fable 6969». Отвечает настоящая, какую выберешь."));
         add.setOnClickListener(v -> editFake(null));
+        add.icon(IC_ADD);
         fakeGroup.addView(add);
         Ui.Row paste = ui.new Row(L.t("Вставить модель"), L.t("Из буфера обмена: модель, которой с тобой поделились."));
         paste.setOnClickListener(v -> importFake());
+        paste.icon(IC_PASTE);
         fakeGroup.addView(paste);
         Ui.Row journal = ui.new Row(L.t("Журнал"), L.t("Что делали хуки мемных моделей. Если что-то не работает, скопируй и отправь автору."));
         journal.chevron();
@@ -588,6 +607,7 @@ public final class ModsActivity extends Activity {
                     })
                     .button(L.t("Закрыть"), true, null).show();
         });
+        journal.icon(IC_JOURNAL);
         fakeGroup.addView(journal);
         ui.restyle(fakeGroup);
     }
@@ -742,10 +762,12 @@ public final class ModsActivity extends Activity {
                 Toast.makeText(this, L.t("Нет приложения для выбора файла"), Toast.LENGTH_SHORT).show();
             }
         });
+        install.icon(IC_INSTALL);
         pluginGroup.addView(install);
         Ui.Row docs = ui.new Row(L.t("Как написать свой мод"), L.t("Документация и пример на GitHub."));
         docs.chevron();
         docs.setOnClickListener(v -> open(GITHUB + "/blob/main/docs/plugins.md"));
+        docs.icon(IC_DOCS);
         pluginGroup.addView(docs);
         ui.restyle(pluginGroup);
     }
@@ -764,6 +786,7 @@ public final class ModsActivity extends Activity {
                 return false;
             }
         });
+        export.icon(IC_DOWNLOAD);
         g.addView(export);
         Ui.Row open = ui.new Row(L.t("Открыть диалог .md"),
                 L.t("Экспорт MargyC или любой .md с заголовками «## Ты» / «## Claude»: посмотреть как чат и продолжить в Claude."));
@@ -776,6 +799,7 @@ public final class ModsActivity extends Activity {
                 Toast.makeText(this, L.t("Нет приложения для выбора файла"), Toast.LENGTH_SHORT).show();
             }
         });
+        open.icon(IC_OPEN);
         g.addView(open);
         ui.restyle(g);
         return g;

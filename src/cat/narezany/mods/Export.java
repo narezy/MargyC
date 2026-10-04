@@ -204,6 +204,12 @@ public final class Export {
                 Fake.log("export: no conversation among " + ids.size() + " uuids");
                 return;
             }
+            if (c.title.isEmpty()) {
+                c.title = memoryTitle(roots);
+            }
+            if (c.title.isEmpty()) {
+                c.title = firstLine(c);
+            }
             write(ctx, c);
         } catch (Throwable t) {
             Log.e(Mods.TAG, "export", t);
@@ -317,6 +323,43 @@ public final class Export {
 
     // ---- сессия Code: события из памяти ----
 
+    /** session_id -> события по uuid в порядке прихода; последняя сессия, где что-то пришло. */
+    private static final Map<String, java.util.LinkedHashMap<String, Object>> sessions =
+            new java.util.LinkedHashMap<String, java.util.LinkedHashMap<String, Object>>();
+    private static String lastSession;
+
+    /** Хук: конец конструктора SdkMessageEvent — событие сессии Code (из истории или из потока). */
+    private static Map<String, String> eventFields;
+
+    public static void event(Object e) {
+        try {
+            if (eventFields == null) {
+                eventFields = fields(Names.SESSION_EVENT);
+            }
+            Map<String, String> ev = eventFields;
+            Object sid = get(e, ev.get("session_id")), uuid = get(e, ev.get("uuid"));
+            if (!(sid instanceof String)) {
+                return;
+            }
+            synchronized (sessions) {
+                java.util.LinkedHashMap<String, Object> list = sessions.get(sid);
+                if (list == null) {
+                    list = new java.util.LinkedHashMap<String, Object>();
+                    sessions.put((String) sid, list);
+                }
+                String key = uuid instanceof String ? (String) uuid : String.valueOf(System.identityHashCode(e));
+                if (!list.containsKey(key)) {
+                    list.put(key, e);
+                }
+                if (list.size() > 5000) {
+                    list.remove(list.keySet().iterator().next());
+                }
+                lastSession = (String) sid;
+            }
+        } catch (Throwable ignored) {
+        }
+    }
+
     static void saveCode(List<Object> roots) {
         Context ctx;
         try {
@@ -326,6 +369,35 @@ public final class Export {
         }
         try {
             final Map<String, String> ev = fields(Names.SESSION_EVENT);
+            // сначала — то, что мод сам запомнил: сессия, чей id есть в параметрах меню, иначе последняя
+            List<Object> remembered = null;
+            synchronized (sessions) {
+                if (!sessions.isEmpty()) {
+                    final Set<String> ids = new LinkedHashSet<String>();
+                    walk(roots, 5, 40000, (o, depth) -> {
+                        if (o instanceof String) {
+                            if (sessions.containsKey(o)) {
+                                ids.add((String) o);
+                            }
+                            return false;
+                        }
+                        return true;
+                    });
+                    String sid = ids.isEmpty() ? lastSession : ids.iterator().next();
+                    if (sid != null && sessions.containsKey(sid)) {
+                        remembered = new ArrayList<Object>(sessions.get(sid).values());
+                    }
+                }
+            }
+            if (remembered != null && !ev.isEmpty()) {
+                Conversation c = session(remembered, Class.forName(ev.get("cls")), ev);
+                if (!c.messages.isEmpty()) {
+                    String first = firstLine(c);
+                    c.title = first.isEmpty() ? "Claude Code" : "Code — " + first;
+                    write(ctx, c);
+                    return;
+                }
+            }
             if (ev.isEmpty()) {
                 toast(ctx, L.t("Не нашёл этот диалог в кэше приложения. Пролистай его до начала и попробуй ещё раз."));
                 return;
@@ -356,7 +428,8 @@ public final class Export {
                 return;
             }
             Conversation c = session(new ArrayList<Object>(best[0]), eventCls, ev);
-            c.title = "Claude Code";
+            String first = firstLine(c);
+            c.title = first.isEmpty() ? "Claude Code" : "Code — " + first;
             write(ctx, c);
         } catch (Throwable t) {
             Log.e(Mods.TAG, "export code", t);
@@ -464,7 +537,7 @@ public final class Export {
                     c = fromCached(db, id);
                 }
                 if (c != null) {
-                    c.title = title(db, id);
+                    c.title = title(ctx, id);
                     return c;
                 }
             } catch (Throwable ignored) {
@@ -598,6 +671,70 @@ public final class Export {
             conv.messages.add(m);
         }
         return conv;
+    }
+
+    /** Название беседы из cachedConversations любой базы (сообщения и метаданные бывают в разных). */
+    private static String title(Context ctx, String id) {
+        for (String name : ctx.databaseList()) {
+            if (name.endsWith("-journal") || name.endsWith("-wal") || name.endsWith("-shm")) {
+                continue;
+            }
+            SQLiteDatabase db = null;
+            try {
+                db = SQLiteDatabase.openDatabase(ctx.getDatabasePath(name).getPath(), null, SQLiteDatabase.OPEN_READONLY);
+                String t = title(db, id);
+                if (!t.isEmpty()) {
+                    return t;
+                }
+            } catch (Throwable ignored) {
+            } finally {
+                if (db != null) {
+                    db.close();
+                }
+            }
+        }
+        return "";
+    }
+
+    /** Название из настройки TITLE беседы — ближайшей к параметрам меню. */
+    private static String memoryTitle(List<Object> roots) {
+        final Map<String, String> t = fields(Names.CONV_TITLE);
+        if (t.isEmpty()) {
+            return "";
+        }
+        final String[] found = {""};
+        try {
+            final Class<?> cls = Class.forName(t.get("cls"));
+            walk(roots, 6, 40000, (o, depth) -> {
+                if (!found[0].isEmpty()) {
+                    return false;
+                }
+                if (cls.isInstance(o)) {
+                    try {
+                        Object v = get(o, t.get("title"));
+                        if (v instanceof String && !((String) v).trim().isEmpty()) {
+                            found[0] = ((String) v).trim();
+                        }
+                    } catch (Throwable ignored) {
+                    }
+                    return false;
+                }
+                return true;
+            });
+        } catch (Throwable ignored) {
+        }
+        return found[0];
+    }
+
+    /** Запасное название: начало первого сообщения. */
+    private static String firstLine(Conversation c) {
+        for (Message m : c.messages) {
+            String t = m.text.replaceAll("\\s+", " ").trim();
+            if (!t.isEmpty()) {
+                return t.length() > 60 ? t.substring(0, 60).trim() + "…" : t;
+            }
+        }
+        return "";
     }
 
     private static String title(SQLiteDatabase db, String id) {

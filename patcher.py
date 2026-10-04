@@ -940,7 +940,24 @@ def patch_chat_menu(sm, dec):
 
     # ---- классы событий сессии Code для выгрузки ----
     names.update(session_names(sm))
+    names.update(title_names(sm))
     return names
+
+
+def title_names(sm):
+    """Класс настройки TITLE беседы: реализует тот же интерфейс, что Model(model) — для имени файла .md."""
+    try:
+        model = sm.one_with('"Model(model="').read_text()
+        iface = re.search(r"^\.implements (L[^;]+;)$", model, re.M).group(1)
+        for f in sm.files_with('"Title(title="'):
+            t = f.read_text()
+            if re.search(r"^\.implements " + re.escape(iface) + "$", t, re.M):
+                field = re.search(r"^\.field public final (\w+):Ljava/lang/String;$", t, re.M).group(1)
+                return {"CONV_TITLE": {"cls": class_of(f)[1:-1].replace("/", "."), "title": field}}
+    except (PatchError, AttributeError):
+        pass
+    log("  класс названия беседы не найден, .md назовётся по первому сообщению")
+    return {"CONV_TITLE": {}}
 
 
 def session_names(sm):
@@ -948,13 +965,20 @@ def session_names(sm):
     base = "com.anthropic.claude.sessions.types."
     out = {"SESSION_EVENT": {}, "SESSION_ASSISTANT": {}, "SESSION_USER": {}, "SESSION_TEXT": {}, "SESSION_USER_TEXT": {}}
     try:
-        for key, serial, fields in (("SESSION_EVENT", "SdkMessageEvent", ("message",)),
+        for key, serial, fields in (("SESSION_EVENT", "SdkMessageEvent", ("message", "uuid", "session_id")),
                                     ("SESSION_ASSISTANT", "SdkAssistantMessage", ("content",)),
                                     ("SESSION_USER", "SdkNonAssistantMessage", ("role", "content")),
                                     ("SESSION_TEXT", "ContentBlock.Text", ("text",)),
                                     ("SESSION_USER_TEXT", "ApiUserMessageContent.Text", ("text",))):
             ser = Serial(sm, base + serial)
             out[key] = dict(cls=ser.cls[1:-1].replace("/", "."), **ser.fields(*fields))
+            if key == "SESSION_EVENT":
+                # каждое разобранное событие — в память мода (история сессии и поток): Export.event(this)
+                text = ser.file.read_text()
+                method = re.search(r"\.method public synthetic constructor <init>\(I[\s\S]*?\.end method", text).group(0)
+                hooked = method.replace("    return-void\n", f"    invoke-static/range {{p0 .. p0}}, {MOD}Export;->"
+                                        "event(Ljava/lang/Object;)V\n\n    return-void\n")
+                ser.file.write_text(text.replace(method, hooked, 1))
     except PatchError as e:
         log(f"  события Code не разобраны ({e}), выгрузки Code не будет")
         return {k: {} for k in out}

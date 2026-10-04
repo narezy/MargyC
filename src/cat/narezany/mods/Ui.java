@@ -43,11 +43,13 @@ import android.widget.TextView;
  */
 final class Ui {
     private static final String FONT = "composeResources/claude.theme.generated.resources/font/anthropic_sans.ttf";
+    private static final String ICON_FONT = "margyc/MaterialIconsRound-Regular.otf";
 
     final Context ctx;
     final boolean night;
     final int bg, card, pressed, text, secondary, section, accent, divider;
     final Typeface regular, medium;
+    private Typeface icons;
 
     Ui(Context ctx) {
         this.ctx = ctx;
@@ -72,6 +74,18 @@ final class Ui {
 
     int dp(float v) {
         return Math.round(v * ctx.getResources().getDisplayMetrics().density);
+    }
+
+    /** Шрифт значков Material Icons (Round) из assets; null, если не нашёлся. */
+    Typeface iconFont() {
+        if (icons == null) {
+            try {
+                icons = new Typeface.Builder(ctx.getAssets(), ICON_FONT).build();
+            } catch (Throwable t) {
+                icons = Typeface.DEFAULT;
+            }
+        }
+        return icons == Typeface.DEFAULT ? null : icons;
     }
 
     private Typeface font(int weight) {
@@ -318,6 +332,24 @@ final class Ui {
 
         void chevron() {
             addView(label("›", 26, secondary, regular));
+        }
+
+        /** Значок Material Icons слева от текста (аргумент — кодовая точка из app-assets). */
+        void icon(int codepoint) {
+            Typeface tf = iconFont();
+            if (tf == null) {
+                return;
+            }
+            TextView ic = new TextView(ctx);
+            ic.setText(new String(Character.toChars(codepoint)));
+            ic.setTypeface(tf);
+            ic.setTextSize(TypedValue.COMPLEX_UNIT_SP, 22);
+            ic.setTextColor(secondary);
+            ic.setIncludeFontPadding(false);
+            ic.setGravity(Gravity.CENTER);
+            LayoutParams lp = new LayoutParams(dp(30), dp(30));
+            lp.rightMargin = dp(16);
+            addView(ic, 0, lp);
         }
 
         View swatch(int color) {

@@ -158,14 +158,16 @@ public final class Fake {
 
     /**
      * ModelId(String): модель для отправки сообщения или смены модели беседы. Вместо мемного id
-     * настоящий. Отправка с мемной запоминает её как выбранную, с её настоящей — сбрасывает.
+     * настоящий. Отправка с мемной запоминает её как выбранную.
      */
     public static String send(String id) {
         try {
             Model m = byId(id);
             sending.set(m != null ? m : NONE);
             log("send " + id + (m != null ? " -> " + m.base : ""));
-            choose(id);
+            if (m != null) {
+                select(m.id);
+            }
             return m != null ? m.base : id;
         } catch (Throwable t) {
             return id;
@@ -200,29 +202,30 @@ public final class Fake {
         }
     }
 
-    /** Выбор модели в чате (для нового чата, для следующего сообщения, в шторке). */
+    /**
+     * Выбор модели в чате (для нового чата, для следующего сообщения, в состоянии чата). Приложение
+     * выставляет его и само, после ответа — настоящей моделью беседы. Поэтому мемная здесь только
+     * запоминается, а настоящая модель выбранной мемной превращается обратно в мемную; сбрасывает
+     * мемную только явный выбор другой модели в меню (сохранение выбора на сервер, {@link #remember}).
+     */
     public static String pick(String id) {
         try {
-            log("pick " + id + " (" + caller() + ")");
-            choose(id);
+            if (id == null) {
+                return null;
+            }
+            if (byId(id) != null) {
+                log("pick " + id + " (" + caller() + ")");
+                select(id);
+                return id;
+            }
+            Model m = selected();
+            if (m != null && bare(m.base).equals(bare(id))) {
+                log("pick " + id + " -> " + m.id + " (" + caller() + ")");
+                return m.id;
+            }
         } catch (Throwable ignored) {
         }
         return id;
-    }
-
-    /** Мемная модель становится выбранной, её настоящая — сбрасывает выбор, остальные не трогают. */
-    private static void choose(String id) throws Exception {
-        if (id == null) {
-            return;
-        }
-        if (byId(id) != null) {
-            select(id);
-            return;
-        }
-        Model selected = selected();
-        if (selected != null && bare(selected.base).equals(bare(id))) {
-            select("");
-        }
     }
 
     private static void select(String id) throws Exception {
