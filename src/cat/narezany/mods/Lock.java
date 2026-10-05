@@ -99,6 +99,7 @@ final class Lock {
                 if (started++ == 0 && enabled() && background > 0
                         && System.currentTimeMillis() - background >= timeout() * 1000L) {
                     locked = true;
+                    Fake.log("lock: locked after " + (System.currentTimeMillis() - background) / 1000 + " s in background");
                 }
             }
 
@@ -221,12 +222,14 @@ final class Lock {
             public void onAuthenticationSucceeded(BiometricPrompt.AuthenticationResult result) {
                 prompting = false;
                 locked = false;
+                Fake.log("lock: unlocked");
                 uncover(a);
             }
 
             @Override
             public void onAuthenticationError(int code, CharSequence message) {
                 prompting = false; // отмена или ошибка: заглушка остаётся, кнопка спросит ещё раз
+                Fake.log("lock: " + code + " " + message);
             }
         });
     }

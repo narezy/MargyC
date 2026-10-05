@@ -36,7 +36,8 @@ public final class ModsActivity extends Activity {
             IC_PRESET = 0xe429, IC_PRESET_TEXT = 0xf1c6, IC_PET = 0xe91d, IC_ADD = 0xe145, IC_JOURNAL = 0xe889,
             IC_INSTALL = 0xe87b, IC_DOCS = 0xea19, IC_DOWNLOAD = 0xf090, IC_OPEN = 0xe873, IC_GALLERY = 0xe41d,
             IC_FONT = 0xe167, IC_REACT = 0xea65, IC_LOCK = 0xe897, IC_TIMER = 0xe425, IC_RECENTS = 0xe8f5,
-            IC_CATALOG = 0xea12, IC_UPDATE = 0xe923, IC_BETA = 0xea4b;
+            IC_CATALOG = 0xea12, IC_UPDATE = 0xe923, IC_BETA = 0xea4b, IC_CARD = 0xe870, IC_DONATE = 0xea70,
+            IC_LICENSE = 0xe90c;
     private Ui.Row fontRow, lockTimeRow, updateRow;
 
     @Override
@@ -78,8 +79,13 @@ public final class ModsActivity extends Activity {
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
         gap2.topMargin = ui.dp(12);
         content.addView(linksGroup(), gap2);
+        content.addView(ui.sectionTitle(L.t("Поддержать автора")));
+        content.addView(donateGroup());
+        content.addView(ui.sectionTitle(L.t("Журнал")));
+        content.addView(journalGroup());
 
-        TextView footer = ui.label("MargyC " + Mods.label() + L.t(" от narezany"), 13, ui.secondary, ui.regular);
+        TextView footer = ui.label("MargyC " + Mods.label() + L.t(" от narezany") + "\n" + L.t("Свободное ПО под лицензией GPL-3.0"),
+                13, ui.secondary, ui.regular);
         footer.setGravity(Gravity.CENTER);
         footer.setLineSpacing(ui.dp(3), 1f);
         footer.setPadding(0, ui.dp(32), 0, ui.dp(8));
@@ -627,20 +633,6 @@ public final class ModsActivity extends Activity {
         paste.setOnClickListener(v -> importFake());
         paste.icon(IC_PASTE);
         fakeGroup.addView(paste);
-        Ui.Row journal = ui.new Row(L.t("Журнал"), L.t("Что делали хуки мемных моделей. Если что-то не работает, скопируй и отправь автору."));
-        journal.chevron();
-        journal.setOnClickListener(v -> {
-            final String text = Fake.journal();
-            ui.new Sheet(L.t("Журнал мемных моделей")).message(text)
-                    .button(L.t("Скопировать"), false, () -> {
-                        ClipboardManager cm = (ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
-                        cm.setPrimaryClip(ClipData.newPlainText("MargyC journal", text));
-                        Toast.makeText(this, L.t("Скопировано"), Toast.LENGTH_SHORT).show();
-                    })
-                    .button(L.t("Закрыть"), true, null).show();
-        });
-        journal.icon(IC_JOURNAL);
-        fakeGroup.addView(journal);
         ui.restyle(fakeGroup);
     }
 
@@ -1069,6 +1061,65 @@ public final class ModsActivity extends Activity {
         ui.restyle(tmp);
         tmp.removeView(row);
         group.addView(row, 0);
+    }
+
+    // ---- донаты, лицензия, журнал ----
+
+    /** Реквизиты для донатов. По условиям лицензии (LICENSE, раздел «Additional terms») их нельзя убирать. */
+    static final String DONATE_CARD = "2204120143055305";
+    static final String DONATE_YOOMONEY = "https://yoomoney.ru/to/4100118196133693";
+
+    private View donateGroup() {
+        LinearLayout g = ui.column();
+        Ui.Row card = ui.new Row(L.t("Перевод на карту"), "2204 1201 4305 5305");
+        card.icon(IC_CARD);
+        card.setOnClickListener(v -> {
+            ClipboardManager cm = (ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
+            cm.setPrimaryClip(ClipData.newPlainText("MargyC", DONATE_CARD));
+            Toast.makeText(this, L.t("Номер карты скопирован"), Toast.LENGTH_SHORT).show();
+        });
+        g.addView(card);
+        Ui.Row yoo = ui.new Row(L.t("ЮMoney"), L.t("Донат через ЮMoney, картой любого банка."));
+        yoo.icon(IC_DONATE);
+        yoo.chevron();
+        yoo.setOnClickListener(v -> open(DONATE_YOOMONEY));
+        g.addView(yoo);
+        Ui.Row license = ui.new Row(L.t("Лицензия"),
+                L.t("GPL-3.0: код можно менять и распространять, но с исходниками и с указанием автора (narezany) и этих реквизитов для донатов."));
+        license.icon(IC_LICENSE);
+        license.chevron();
+        license.setOnClickListener(v -> open(GITHUB + "/blob/main/LICENSE"));
+        g.addView(license);
+        ui.restyle(g);
+        return g;
+    }
+
+    private View journalGroup() {
+        LinearLayout g = ui.column();
+        Ui.Row journal = ui.new Row(L.t("Журнал MargyC"),
+                L.t("Что делали хуки и моды, включая прошлые запуски. Если что-то не работает, скопируй и отправь автору."));
+        journal.icon(IC_JOURNAL);
+        journal.chevron();
+        journal.setOnClickListener(v -> {
+            final String text = Journal.report();
+            TextView body = ui.label(text, 12, ui.secondary, ui.regular);
+            body.setTypeface(android.graphics.Typeface.MONOSPACE);
+            body.setTextIsSelectable(true);
+            ui.new Sheet(L.t("Журнал MargyC")).view(body)
+                    .button(L.t("Очистить"), false, () -> {
+                        Journal.clear();
+                        Toast.makeText(this, L.t("Журнал очищен"), Toast.LENGTH_SHORT).show();
+                    })
+                    .button(L.t("Скопировать"), false, () -> {
+                        ClipboardManager cm = (ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
+                        cm.setPrimaryClip(ClipData.newPlainText("MargyC journal", text));
+                        Toast.makeText(this, L.t("Скопировано"), Toast.LENGTH_SHORT).show();
+                    })
+                    .button(L.t("Закрыть"), true, null).show();
+        });
+        g.addView(journal);
+        ui.restyle(g);
+        return g;
     }
 
     // ---- галерея тем и шрифт ----

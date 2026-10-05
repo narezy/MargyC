@@ -94,9 +94,44 @@ public final class Font {
             int weight = i.weight > 0 ? i.weight : original != null ? original.getWeight() : 400;
             boolean italic = i.italic != null ? i.italic : i.path.contains("italic");
             Typeface t = typeface(weight, italic);
+            if (logged++ < 12) {
+                Fake.log("font: " + i.path.substring(i.path.lastIndexOf('/') + 1) + " " + weight + " -> "
+                        + (t != null ? choice() : "as in Claude"));
+            }
             return t != null ? t : original;
         } catch (Throwable t) {
             Log.e(Mods.TAG, "font", t);
+            return original;
+        }
+    }
+
+    // ---- основной путь: Anthropic Sans / Serif из ByteBuffer через Typeface.CustomFallbackBuilder ----
+
+    private static final Map<Object, int[]> STYLE = Collections.synchronizedMap(new WeakHashMap<Object, int[]>());
+    private static int logged;
+
+    public static Typeface.CustomFallbackBuilder style(Typeface.CustomFallbackBuilder b, android.graphics.fonts.FontStyle st) {
+        try {
+            STYLE.put(b, new int[] {st.getWeight(), st.getSlant()});
+        } catch (Throwable ignored) {
+        }
+        return b.setStyle(st);
+    }
+
+    public static Typeface fallback(Typeface.CustomFallbackBuilder b) {
+        Typeface original = b.build();
+        int[] st = STYLE.remove(b);
+        try {
+            int weight = st != null ? st[0] : original.getWeight();
+            boolean italic = st != null ? st[1] == android.graphics.fonts.FontStyle.FONT_SLANT_ITALIC : original.isItalic();
+            Typeface t = typeface(weight, italic);
+            if (logged++ < 12) {
+                Fake.log("font: Claude font " + weight + (italic ? " italic" : "") + " -> "
+                        + (t != null ? choice() : "as in Claude"));
+            }
+            return t != null ? t : original;
+        } catch (Throwable t) {
+            Fake.log("font error: " + t);
             return original;
         }
     }

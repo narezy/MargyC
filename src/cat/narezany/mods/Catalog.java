@@ -61,6 +61,7 @@ final class Catalog {
             }
             final List<Entry> result = list;
             final String e = err;
+            Fake.log("catalog: " + (e != null ? "failed: " + e : result.size() + " mods"));
             main.post(() -> loaded.loaded(result, e));
         }, "MargyC catalog").start();
     }
@@ -85,6 +86,7 @@ final class Catalog {
             }
             final Plugins.Info result = info;
             final String e = err;
+            Fake.log("catalog: install " + entry.id + (e != null ? " failed: " + e : " ok"));
             main.post(() -> done.installed(result, e));
         }, "MargyC catalog install").start();
     }

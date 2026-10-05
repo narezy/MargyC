@@ -41,12 +41,22 @@ public final class Prompt {
     public static List hidden(List context) {
         List result = context;
         try {
+            int n = 0, chars = 0;
             for (String part : texts()) {
                 for (String chunk : chunks(part)) {
+                    List before = result;
                     result = add(result, chunk);
+                    if (result != before) {
+                        n++;
+                        chars += chunk.length();
+                    }
                 }
             }
-        } catch (Throwable ignored) {
+            if (n > 0) {
+                Fake.log("hub SendMessage: hidden_context +" + n + " parts, " + chars + " chars");
+            }
+        } catch (Throwable t) {
+            Fake.log("hub SendMessage error: " + t);
         }
         return result;
     }
@@ -56,7 +66,11 @@ public final class Prompt {
         List<String> out = new ArrayList<String>();
         String fake = Fake.prompt();
         if (enabled()) {
-            out.add(selected().text);
+            Preset p = selected();
+            Fake.log("prompt preset: " + p.name + " (" + p.text.length() + " chars)");
+            out.add(p.text);
+        } else {
+            Fake.log("prompt preset: off");
         }
         if (fake != null) {
             out.add(fake);

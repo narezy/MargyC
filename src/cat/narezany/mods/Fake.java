@@ -30,6 +30,7 @@ public final class Fake {
     private static final ThreadLocal<Model> sending = new ThreadLocal<Model>();
     /** Когда создали ModelId: ModelId бывает и без сообщения (смена модели), старый на потоке не годится. */
     private static final ThreadLocal<Long> sendingAt = new ThreadLocal<Long>();
+    private static final ThreadLocal<String> sendingId = new ThreadLocal<String>();
     private static final long SENDING_TTL = 3000;
     /** ModelId для сообщения создали, но модель настоящая. */
     private static final Model NONE = new Model("", "", "", "", "");
@@ -167,11 +168,9 @@ public final class Fake {
         try {
             Model m = byId(id);
             sending.set(m != null ? m : NONE);
+            sendingId.set(id);
             sendingAt.set(System.currentTimeMillis());
-            log("send " + id + (m != null ? " -> " + m.base : ""));
-            if (m != null) {
-                select(m.id);
-            }
+            log("ModelId for message: " + id + (m != null ? " -> " + m.base : ""));
             return m != null ? m.base : id;
         } catch (Throwable t) {
             return id;
@@ -235,7 +234,6 @@ public final class Fake {
             }
             if (byId(id) != null) {
                 log("pick " + id + " (" + caller() + ")");
-                select(id);
                 return id;
             }
             Model m = selected();
@@ -284,23 +282,34 @@ public final class Fake {
     static String prompt() {
         Model m = sending.get();
         Long at = sendingAt.get();
+        String sentId = sendingId.get();
         sending.remove(); // при копировании запроса ModelId не создаётся заново
         sendingAt.remove();
+        sendingId.remove();
         if (m != null && (at == null || System.currentTimeMillis() - at > SENDING_TTL)) {
             m = null; // ModelId остался от смены модели, а не от этого сообщения
         }
+        // Мемную выбирает только тап в меню ({@link #picked}): в старом чате приложение ещё может слать
+        // прежнюю (мемную) модель беседы, хотя ты уже выбрал обычную.
+        Model chosen = null;
         try {
-            if (m == null) {
-                m = selected();
-                log("message without ModelId, selected: " + (m != null ? m.id : "-"));
-            } else {
-                log("message with ModelId" + (m != NONE ? " " + m.id : ""));
-            }
+            chosen = selected();
         } catch (Throwable ignored) {
         }
-        if (m == null || m == NONE) {
+        if (chosen == null) {
+            log("message: no meme model chosen" + (m != null && m != NONE ? " (app sent " + m.id + ", ignored)" : ""));
             return null;
         }
+        if (m == NONE && (sentId == null || !bare(chosen.base).equals(bare(sentId)))) {
+            log("message: ModelId of another real model " + sentId + ", no meme prompt");
+            return null;
+        }
+        if (m != null && m != NONE && m != chosen) {
+            log("message: ModelId " + m.id + ", chosen " + chosen.id + ", no meme prompt");
+            return null;
+        }
+        m = chosen;
+        log("message: meme prompt of " + m.id);
         StringBuilder sb = new StringBuilder();
         sb.append("Context added automatically by the app, not typed by the user. For fun, the user picked a joke model "
                 + "named \"").append(m.name).append("\" in the model list of MargyC");
@@ -326,22 +335,8 @@ public final class Fake {
 
     // ---- журнал: чтобы по телефону было видно, какие хуки сработали ----
 
-    private static final java.util.ArrayDeque<String> journal = new java.util.ArrayDeque<String>();
-
-    static synchronized void log(String line) {
-        String t = new java.text.SimpleDateFormat("HH:mm:ss", java.util.Locale.US).format(new java.util.Date());
-        journal.addLast(t + " " + line);
-        while (journal.size() > 150) {
-            journal.removeFirst();
-        }
-    }
-
-    static synchronized String journal() {
-        StringBuilder sb = new StringBuilder();
-        for (String line : journal) {
-            sb.append(line).append('\n');
-        }
-        return sb.length() == 0 ? L.t("Пока пусто.") : sb.toString();
+    static void log(String line) {
+        Journal.log(line);
     }
 
     /** Класс, который позвал хук (обфусцированное имя, для журнала). */

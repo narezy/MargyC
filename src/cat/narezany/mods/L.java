@@ -291,5 +291,17 @@ final class L {
         put("Пропустить", "Skip");
         put("Позже", "Later");
         put("Скачать", "Download");
+        put("Поддержать автора", "Support the author");
+        put("Свободное ПО под лицензией GPL-3.0", "Free software under GPL-3.0");
+        put("Перевод на карту", "Bank card transfer");
+        put("Номер карты скопирован", "Card number copied");
+        put("ЮMoney", "YooMoney");
+        put("Донат через ЮMoney, картой любого банка.", "Donate via YooMoney with any bank card.");
+        put("Лицензия", "License");
+        put("GPL-3.0: код можно менять и распространять, но с исходниками и с указанием автора (narezany) и этих реквизитов для донатов.", "GPL-3.0: you may change and share the code, with the source, keeping the author (narezany) and these donation details.");
+        put("Журнал MargyC", "MargyC journal");
+        put("Что делали хуки и моды, включая прошлые запуски. Если что-то не работает, скопируй и отправь автору.", "What the hooks and mods did, including previous runs. If something does not work, copy it and send it to the author.");
+        put("Очистить", "Clear");
+        put("Журнал очищен", "Journal cleared");
     }
 }

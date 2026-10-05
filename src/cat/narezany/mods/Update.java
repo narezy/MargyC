@@ -159,6 +159,8 @@ final class Update {
                 if (e == null) {
                     available = result;
                 }
+                Fake.log("update check: " + (e != null ? "failed: " + e
+                        : result != null ? result.label() + " available" : "up to date (" + Mods.label() + ")"));
                 done.done(available);
             });
         }, "MargyC update").start();

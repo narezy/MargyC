@@ -13,7 +13,7 @@ public final class Mods {
     static final String TAG = "MargyC";
     static final String VERSION = "1.2"; // версия MargyC, не Claude
     /** Номер беты этой версии, 0 — релиз. */
-    static final int BETA = 1;
+    static final int BETA = 2;
     /**
      * Номер сборки для проверки обновлений: 1.2 beta 1 = 10201, 1.2 = 10299. Релиз той же версии
      * больше любой её беты, поэтому бета-тестерам предлагается и он.
@@ -46,6 +46,38 @@ public final class Mods {
 
     /** Application.onCreate, сразу после CrashLog: питомец и свои моды. */
     public static void init(android.app.Application app) {
+        try {
+            String claude = app.getPackageManager().getPackageInfo(app.getPackageName(), 0).versionName;
+            Journal.log("start: MargyC " + label() + ", Claude " + claude + ", Android " + Build.VERSION.RELEASE
+                    + " (API " + Build.VERSION.SDK_INT + "), " + Build.MANUFACTURER + " " + Build.MODEL);
+            app.registerActivityLifecycleCallbacks(new android.app.Application.ActivityLifecycleCallbacks() {
+                @Override
+                public void onActivityResumed(android.app.Activity a) {
+                    Journal.log("screen: " + a.getClass().getSimpleName());
+                }
+
+                @Override
+                public void onActivityCreated(android.app.Activity a, android.os.Bundle b) {}
+
+                @Override
+                public void onActivityStarted(android.app.Activity a) {}
+
+                @Override
+                public void onActivityPaused(android.app.Activity a) {}
+
+                @Override
+                public void onActivityStopped(android.app.Activity a) {
+                }
+
+                @Override
+                public void onActivitySaveInstanceState(android.app.Activity a, android.os.Bundle b) {}
+
+                @Override
+                public void onActivityDestroyed(android.app.Activity a) {}
+            });
+        } catch (Throwable t) {
+            Log.e(TAG, "journal start", t);
+        }
         try {
             Pet.install(app);
         } catch (Throwable t) {

@@ -421,7 +421,23 @@ def patch_fonts(sm):
         f.write_text(s)
     if ctors == 0 or calls == 0:
         raise PatchError(f"шрифты: Typeface.Builder(assets, путь) {ctors}, вызовов {calls}")
-    return ctors, calls
+    # основные шрифты (Anthropic Sans / Serif с осью opsz) — из ByteBuffer, через CustomFallbackBuilder
+    cfb = "Landroid/graphics/Typeface$CustomFallbackBuilder;"
+    fb = re.compile(r"invoke-virtual \{([^}]*)\}, " + re.escape(cfb)
+                    + r"->(setStyle\(Landroid/graphics/fonts/FontStyle;\)" + re.escape(cfb) + r"|build\(\)Landroid/graphics/Typeface;)")
+    main = 0
+    for f in sm.files_with("Landroid/graphics/fonts/Font$Builder;-><init>(Ljava/nio/ByteBuffer;)V"):
+        s = f.read_text()
+        if cfb + "->build()" not in s:
+            continue
+        s, n = fb.subn(lambda m: f"invoke-static {{{m.group(1)}}}, {MOD}Font;->" + (
+            f"style({cfb}Landroid/graphics/fonts/FontStyle;){cfb}" if m.group(2).startswith("setStyle")
+            else f"fallback({cfb})Landroid/graphics/Typeface;"), s)
+        main += n
+        f.write_text(s)
+    if main < 2:
+        raise PatchError(f"шрифты: CustomFallbackBuilder {main}")
+    return ctors, calls + main
 
 
 def patch_rest_body(sm):
@@ -702,6 +718,21 @@ def patch_models(sm):
     s = f.read_text()
     f.write_text(s[:mm.end()] + f"\n    invoke-static/range {{{mm.group(3)} .. {mm.group(3)}}}, {MOD}Fake;->"
                  "picked(Ljava/lang/String;)V\n" + s[mm.end():])
+    # и сам тап в шторке «Выбрать модель»: она зовёт выбор модели интерфейса этого класса, d(id)
+    pickers = [i for i in re.findall(r"^\.implements (L[^;]+;)$", f.read_text(), re.M)
+               if re.search(r"^\.method public abstract d\(Ljava/lang/String;\)L[^;]+;$", sm.file_of(i).read_text(), re.M)]
+    if len(pickers) != 1:
+        raise PatchError(f"интерфейс выбора модели: найдено {len(pickers)}")
+    site = re.compile(r"(\n\s+)(invoke-interface \{\w+, (\w+)\}, " + re.escape(pickers[0])
+                      + r"->d\(Ljava/lang/String;\)L[^;]+;\n)")
+    sheet = 0
+    for f in sm.files_with(pickers[0] + "->d(Ljava/lang/String;)"):
+        s, n = site.subn(lambda m: f"{m.group(1)}invoke-static {{{m.group(3)}}}, {MOD}Fake;->picked(Ljava/lang/String;)V\n"
+                         + m.group(1) + m.group(2), f.read_text())
+        sheet += n
+        f.write_text(s)
+    if sheet == 0:
+        raise PatchError("шторка выбора модели: вызов не найден")
 
     # ModelId{default, identifier} в запросах нового API. ModelId(String) приложение создаёт само для отправки
     # и смены модели беседы, основной конструктор зовёт ещё и разбор ответов сервера.

@@ -116,6 +116,7 @@ final class Gallery {
 
     /** Применить: акцент (если есть), замены серых в обеих темах, своя тема включается. */
     static void apply(Preset p) throws Exception {
+        Fake.log("theme gallery: " + p.name);
         Theme.setOverrides(true, p.dark != null ? map(Names.DARK_PALETTE, DARK_L, p.dark) : new HashMap<Integer, Integer>());
         Theme.setOverrides(false, p.light != null ? map(Names.LIGHT_PALETTE, LIGHT_L, p.light) : new HashMap<Integer, Integer>());
         Theme.setCustom(true);

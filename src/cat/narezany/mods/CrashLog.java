@@ -37,6 +37,12 @@ public final class CrashLog {
                         save(app, thread, error);
                     } catch (Throwable ignored) {
                     }
+                    try {
+                        StackTraceElement[] st = error.getStackTrace();
+                        Journal.crash("CRASH in " + thread.getName() + ": " + error
+                                + (st.length > 0 ? " at " + st[0] : ""));
+                    } catch (Throwable ignored) {
+                    }
                     if (previous != null) {
                         previous.uncaughtException(thread, error);
                     }

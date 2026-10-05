@@ -10,10 +10,12 @@ Russian UI, your own themes, meme models, a Clawd pet on the composer and mods y
 <a href="https://github.com/narezy/MargyC/raw/Download/MargyC.apk"><img src="https://img.shields.io/badge/Download-APK-8FD2B1?style=for-the-badge&logo=android&logoColor=white" alt="Download APK"></a>
 <a href="https://t.me/margyclaude"><img src="https://img.shields.io/badge/Telegram-@margyclaude-2AABEE?style=for-the-badge&logo=telegram&logoColor=white" alt="Telegram channel"></a>
 <a href="docs/plugins.md"><img src="https://img.shields.io/badge/Write_a_mod-docs-D97757?style=for-the-badge&logo=readthedocs&logoColor=white" alt="Write a mod"></a>
+<a href="https://yoomoney.ru/to/4100118196133693"><img src="https://img.shields.io/badge/Donate-YooMoney-8B3FFD?style=for-the-badge" alt="Donate"></a>
 
 <img src="https://img.shields.io/badge/version-1.1-555?style=flat-square" alt="version 1.1">
 <img src="https://img.shields.io/badge/Android-10%2B-555?style=flat-square&logo=android" alt="Android 10+">
 <img src="https://img.shields.io/badge/arch-arm64--v8a-555?style=flat-square" alt="arm64-v8a">
+<img src="https://img.shields.io/badge/license-GPL--3.0-555?style=flat-square" alt="GPL-3.0">
 
 <br><br>
 
@@ -84,10 +86,23 @@ the result will not install over a MargyC signed with another key.
 | [`tools/build_mod.py`](tools/build_mod.py) | builds a `.mcmod` |
 | [`res/values-ru`](res/values-ru) | the Russian translation |
 
+## Support the author
+
+- Bank card: `2204 1201 4305 5305`
+- YooMoney: [yoomoney.ru/to/4100118196133693](https://yoomoney.ru/to/4100118196133693)
+
+The same details are on the Mods screen, in *Поддержать автора*.
+
 ## Links
 
 - Telegram channel: [@margyclaude](https://t.me/margyclaude)
 - Author: [@narezany](https://t.me/narezany)
+
+## License
+
+MargyC is free software under the [GNU GPL version 3](LICENSE). You may change and share it, with the source.
+Under the [additional terms](NOTICE) (GPL section 7b), every copy and fork must keep the author attribution
+(narezany) and the author's donation details on the Mods screen.
 
 <sub>Icons on the Mods screen: [Material Icons](https://github.com/google/material-design-icons) by Google, Apache License 2.0.</sub>
 
