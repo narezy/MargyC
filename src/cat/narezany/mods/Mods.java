@@ -11,7 +11,25 @@ import java.lang.reflect.Method;
 /** Общие штуки мода: открыть экран модов, настройки, язык приложения, перезапуск. */
 public final class Mods {
     static final String TAG = "MargyC";
-    static final String VERSION = "1.1"; // версия MargyC, не Claude
+    static final String VERSION = "1.2"; // версия MargyC, не Claude
+    /** Номер беты этой версии, 0 — релиз. */
+    static final int BETA = 1;
+    /**
+     * Номер сборки для проверки обновлений: 1.2 beta 1 = 10201, 1.2 = 10299. Релиз той же версии
+     * больше любой её беты, поэтому бета-тестерам предлагается и он.
+     */
+    static final int CODE = code(VERSION, BETA);
+
+    static int code(String version, int beta) {
+        String[] p = version.split("\\.");
+        int major = Integer.parseInt(p[0]), minor = p.length > 1 ? Integer.parseInt(p[1]) : 0;
+        return major * 10000 + minor * 100 + (beta > 0 ? beta : 99);
+    }
+
+    /** «1.2», «1.2 beta», «1.2 beta 2». */
+    static String label() {
+        return VERSION + (BETA == 0 ? "" : BETA == 1 ? " beta" : " beta " + BETA);
+    }
 
     private Mods() {}
 
@@ -37,6 +55,16 @@ public final class Mods {
             Plugins.load(app);
         } catch (Throwable t) {
             Log.e(TAG, "Plugins", t);
+        }
+        try {
+            Lock.install(app);
+        } catch (Throwable t) {
+            Log.e(TAG, "Lock", t);
+        }
+        try {
+            Update.install(app);
+        } catch (Throwable t) {
+            Log.e(TAG, "Update", t);
         }
     }
 

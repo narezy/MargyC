@@ -41,21 +41,117 @@ public final class Prompt {
     public static List hidden(List context) {
         List result = context;
         try {
-            String fake = Fake.prompt();
-            if (enabled()) {
-                for (String part : chunks(selected().text)) {
-                    result = add(result, part);
+            for (String part : texts()) {
+                for (String chunk : chunks(part)) {
+                    result = add(result, chunk);
                 }
-            }
-            if (fake != null) {
-                result = add(result, fake);
-            }
-            for (String text : Plugins.prompts()) {
-                result = add(result, text);
             }
         } catch (Throwable ignored) {
         }
         return result;
+    }
+
+    /** Всё, что уходит с сообщением: пресет, промпт мемной модели, контекст своих модов. */
+    private static List<String> texts() throws Exception {
+        List<String> out = new ArrayList<String>();
+        String fake = Fake.prompt();
+        if (enabled()) {
+            out.add(selected().text);
+        }
+        if (fake != null) {
+            out.add(fake);
+        }
+        out.addAll(Plugins.prompts());
+        return out;
+    }
+
+    /**
+     * Готовое тело JSON-запроса (okio ByteString). Старый движок чата (у аккаунтов без hub) шлёт сообщение в
+     * REST /completion, в ChatCompletionRequest нет hidden_context. Туда текст уходит стилем
+     * (personalized_styles, как в веб-версии): его тоже видит только Claude.
+     */
+    public static Object body(Object bytes) {
+        try {
+            byte[] b = bytes(bytes);
+            if (b == null || b.length < 2 || b[0] != '{') {
+                return bytes;
+            }
+            String json = new String(b, "UTF-8");
+            if (!json.contains("\"prompt\"") || !json.contains("\"timezone\"")) {
+                return bytes;
+            }
+            JSONObject o = new JSONObject(json);
+            if (!o.has("prompt") || !o.has("timezone")) {
+                return bytes;
+            }
+            StringBuilder text = new StringBuilder();
+            for (String part : texts()) {
+                if (!part.trim().isEmpty()) {
+                    text.append(text.length() == 0 ? "" : "\n\n").append(part.trim());
+                }
+            }
+            if (text.length() == 0) {
+                return bytes;
+            }
+            JSONArray styles = o.optJSONArray("personalized_styles");
+            if (styles == null) {
+                styles = new JSONArray();
+            }
+            styles.put(new JSONObject().put("type", "custom").put("key", "margyc").put("uuid", STYLE_UUID)
+                    .put("name", "MargyC").put("prompt", text.toString()).put("summary", "MargyC")
+                    .put("isDefault", false));
+            o.put("personalized_styles", styles);
+            Fake.log("REST /completion: prompt as style, " + text.length() + " chars");
+            return withBytes(bytes, o.toString().getBytes("UTF-8"));
+        } catch (Throwable t) {
+            Fake.log("REST /completion error: " + t);
+            return bytes;
+        }
+    }
+
+    private static final String STYLE_UUID = "4d617267-7943-4000-8000-6d6172677963";
+
+    private static java.lang.reflect.Method toBytes;
+
+    /**
+     * Байты okio ByteString: метод базового класса без параметров, возвращающий byte[]. Базовый — тот, у
+     * которого конструктор (byte[]); его подкласс (сегментный ByteString) этот метод переопределяет.
+     */
+    private static byte[] bytes(Object bs) throws Exception {
+        if (toBytes == null) {
+            Class<?> base = base(bs.getClass());
+            for (java.lang.reflect.Method m : base == null ? new java.lang.reflect.Method[0] : base.getDeclaredMethods()) {
+                if (m.getReturnType() == byte[].class && m.getParameterTypes().length == 0
+                        && !java.lang.reflect.Modifier.isStatic(m.getModifiers())) {
+                    m.setAccessible(true);
+                    toBytes = m;
+                    break;
+                }
+            }
+        }
+        return toBytes == null || !toBytes.getDeclaringClass().isInstance(bs) ? null : (byte[]) toBytes.invoke(bs);
+    }
+
+    private static Class<?> base(Class<?> c) {
+        for (; c != null; c = c.getSuperclass()) {
+            try {
+                c.getDeclaredConstructor(byte[].class);
+                return c;
+            } catch (NoSuchMethodException ignored) {
+            }
+        }
+        return null;
+    }
+
+    /** Новый ByteString с этими байтами. */
+    private static Object withBytes(Object bs, byte[] b) throws Exception {
+        Class<?> c = base(bs.getClass());
+        if (c == null) {
+            return bs;
+        }
+        java.lang.reflect.Constructor<?> k = c.getDeclaredConstructor(byte[].class);
+        k.setAccessible(true);
+        return k.newInstance((Object) b);
     }
 
     /** Текст частями не длиннее CHUNK, по границам абзацев (строк, если абзац слишком длинный). */
@@ -203,14 +299,18 @@ public final class Prompt {
 
     /** Коротко обо всех функциях MargyC и включённых своих модах. */
     static String features(Context ctx) {
-        StringBuilder sb = new StringBuilder("MargyC " + Mods.VERSION + " features, all on the Mods screen "
+        StringBuilder sb = new StringBuilder("MargyC " + Mods.label() + " features, all on the Mods screen "
                 + "(\u041c\u043e\u0434\u044b in the side menu): Russian UI toggle; accent color and custom themes "
-                + "(format below); system prompt presets (this text); meme models: fake models on top of the model "
+                + "(format below) plus a gallery of ready themes (AMOLED, Material You, Catppuccin, Nord, Dracula, "
+                + "Gruvbox, Tokyo Night, Sepia); app-wide font choice (system, serif, Claude serif, monospace or a "
+                + ".ttf/.otf file); app lock with fingerprint/face/PIN and hiding the chat in recent apps; update "
+                + "checks with an optional beta channel; system prompt presets (this text); meme models: fake models on top of the model "
                 + "picker, answered by a real model, with their own prompt, shared as text in this format:\n"
                 + "MargyC model\nname: Fable 6969\ndescription: one line\nbase: <real model id>\nprompt:\n<prompt to the end>\n"
-                + "(the user pastes it via Meme models -> Paste a model); Clawd pet on the message box; conversation "
+                + "(the user pastes it via Meme models -> Paste a model); Clawd pet on the message box that types on a laptop while "
+                + "Claude answers and jumps or dances when the answer is ready; conversation "
                 + "export to .md from the chat's menu and opening .md as a chat; custom mods (.mcmod plugins: dex + "
-                + "manifest.json, docs at github.com/narezy/MargyC/blob/main/docs/plugins.md); crash log and journal.");
+                + "manifest.json, also a one-tap mod catalog, docs at github.com/narezy/MargyC/blob/main/docs/plugins.md); crash log and journal.");
         List<Plugins.Info> mods = new ArrayList<Plugins.Info>();
         for (Plugins.Info info : Plugins.installed(ctx)) {
             if (Plugins.enabled(info.id)) {

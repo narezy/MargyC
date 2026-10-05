@@ -393,6 +393,52 @@ def patch_prompt(sm):
     f.write_text(s)
 
 
+def patch_fonts(sm):
+    """Мод «Шрифт»: вызовы Typeface.Builder в коде приложения идут через Font (те же регистры, invoke-static
+    вместо invoke-virtual), а после Builder(assets, путь) Font запоминает путь шрифта."""
+    tb = "Landroid/graphics/Typeface$Builder;"
+    names = {"setFontVariationSettings([Landroid/graphics/fonts/FontVariationAxis;)": "axes",
+             "setWeight(I)": "weight", "setItalic(Z)": "italic", "build()": "build"}
+    call = re.compile(r"invoke-virtual \{([^}]*)\}, " + re.escape(tb) + r"->(\w+)\(([^)]*)\)(L[^;]+;)")
+    ctor = re.compile(r"(invoke-direct \{(\w+), \w+, (\w+)\}, " + re.escape(tb)
+                      + r"-><init>\(Landroid/content/res/AssetManager;Ljava/lang/String;\)V\n)")
+    calls = ctors = 0
+    for f in sm.files_with(tb + "->"):
+        s = f.read_text()
+
+        def repl(m):
+            nonlocal calls
+            name = names.get(f"{m.group(2)}({m.group(3)})")
+            if name is None:
+                return m.group(0)
+            calls += 1
+            return f"invoke-static {{{m.group(1)}}}, {MOD}Font;->{name}({tb}{m.group(3)}){m.group(4)}"
+
+        s = call.sub(repl, s)
+        s, n = ctor.subn(lambda m: m.group(1) + f"\n    invoke-static {{{m.group(2)}, {m.group(3)}}}, {MOD}Font;->"
+                         f"asset({tb}Ljava/lang/String;)V\n", s)
+        ctors += n
+        f.write_text(s)
+    if ctors == 0 or calls == 0:
+        raise PatchError(f"шрифты: Typeface.Builder(assets, путь) {ctors}, вызовов {calls}")
+    return ctors, calls
+
+
+def patch_rest_body(sm):
+    """Старый движок чата (SSE_STORE, у аккаунтов без hub) шлёт ChatCompletionRequest в REST /completion, а там
+    hidden_context нет. Готовый JSON тела запроса проходит через Prompt.body: тот дописывает пресет и промпт
+    мемной модели стилем (personalized_styles, как стили веб-версии)."""
+    f = sm.one_with('" failed to encode ("')
+    s = f.read_text()
+    s = sub_once(s, r"(invoke-virtual \{[^}]*\}, L[^;]+;->\w+\(J\)(L[^;]+;)\n\s+move-result-object (\w+)\n"
+                    r"\s+:try_end_\w+\n\s+\.catch [^\n]+\n)(\s+invoke-direct \{\w+, \3\}, L[^;]+;-><init>\(\2\)V\n)",
+                 lambda m: (m.group(1) + f"\n    invoke-static/range {{{m.group(3)} .. {m.group(3)}}}, {MOD}Prompt;->"
+                            f"body(Ljava/lang/Object;)Ljava/lang/Object;\n\n    move-result-object {m.group(3)}\n\n"
+                            f"    check-cast {m.group(3)}, {m.group(2)}\n" + m.group(4)),
+                 "тело JSON-запроса")
+    f.write_text(s)
+
+
 PARAM = re.compile(r"\[*(?:L[^;]+;|[ZBSCIFJD])")
 
 
@@ -631,6 +677,32 @@ def patch_models(sm):
     for needle in ('"NewChatModelSelection(model="', '"ModelSelectionForNextSend(model="'):
         hook_string_ctor(sm, needle, "pick")
 
+    # тап по модели в меню: единственное место, где ясно, что пользователь выбрал сам. Метод ищет запись меню
+    # с этим id (entry.id == id && !entry.disabled) и меняет модель. Явный выбор настоящей модели сбрасывает
+    # мемную, иначе её настоящая модель так и превращалась бы обратно в мемную.
+    fid, fdis = names["FAKE_ENTRY"]["id"], names["FAKE_ENTRY"]["disabled"]
+    tap = re.compile(r"iget-object (\w+), (\w+), " + re.escape(entry.cls) + "->" + fid + r":Ljava/lang/String;\s+"
+                     r"invoke-static \{\1, (\w+)\}, L[^;]+;->\w+\(Ljava/lang/Object;Ljava/lang/Object;\)Z\s+"
+                     r"move-result \w+\s+if-eqz \w+, :\w+\s+"
+                     r"iget-boolean (\w+), \2, " + re.escape(entry.cls) + "->" + fdis + r":Z\s+if-nez \4, :\w+\n")
+    # такая же проверка есть и в меню Code и в других местах; смена модели чата — только там, где есть
+    # «когда применить» (enum AtOnce / WithNextSend)
+    timing = class_of(sm.one_with('"WithNextSend"'))
+    taps = []
+    for f in sm.files_with(f"{entry.cls}->{fdis}:Z"):
+        s = f.read_text()
+        for mm in tap.finditer(s):
+            start = s.rfind("\n.method ", 0, mm.start())
+            end = s.find("\n.end method", mm.end())
+            if timing + "->" in s[start:end]:
+                taps.append((f, mm))
+    if len(taps) != 1:
+        raise PatchError(f"тап по модели в меню: найдено {len(taps)}, ожидалось 1")
+    f, mm = taps[0]
+    s = f.read_text()
+    f.write_text(s[:mm.end()] + f"\n    invoke-static/range {{{mm.group(3)} .. {mm.group(3)}}}, {MOD}Fake;->"
+                 "picked(Ljava/lang/String;)V\n" + s[mm.end():])
+
     # ModelId{default, identifier} в запросах нового API. ModelId(String) приложение создаёт само для отправки
     # и смены модели беседы, основной конструктор зовёт ещё и разбор ответов сервера.
     f = sm.one_with('"type.googleapis.com/anthropic.bard.api.v1alpha.ModelId"')
@@ -805,7 +877,31 @@ def find_clawd(sm):
         names.update(COMPOSE_VIEW=views[0][0], FUNCTION2=views[0][1], CLAWD=class_of(f), CLAWD_METHOD=ms[0][0],
                      MODIFIER=modifier[0])
     except PatchError as e:
-        log(f"  Clawd приложения не найден ({e}), будет свой")
+        log(f"  Clawd приложения не найден ({e}), Clawd не будет")
+    names.update(CLAWD_ANIM="", CLAWD_SHEET="", CLAWD_FRAMES="", CLAWD_FRAMES_METHOD="")
+    try:
+        # анимации Clawd для реакций: enum с кадрами (Jumping, Dancing, Laptop, Guitar, NodOff, Sleep, WakeUp,
+        # Warning), его метод () -> лист кадров, и функция (лист, палитра, рамка) -> ArrayList<Bitmap-обёрток>
+        anims = [f for f in sm.files_with('"NodOff"')
+                 if all(x in f.read_text() for x in ('"Guitar"', '"WakeUp"', '"Warning"', '"Jumping"'))
+                 and re.search(r"^\.class [^\n]*\benum\b", f.read_text(), re.M)]
+        if len(anims) != 1:
+            raise PatchError(f"анимации Clawd: найдено {len(anims)}")
+        anim = class_of(anims[0])
+        sheets = re.findall(r"^\.method public final (\w+)\(\)(L[^;]+;)$", anims[0].read_text(), re.M)
+        sheets = [x for x in sheets if x[1] != anim]
+        if len(sheets) != 1:
+            raise PatchError(f"лист кадров Clawd: найдено {len(sheets)}")
+        sheet = sheets[0][1]
+        frames = []
+        for f in sm.files_with("Landroid/graphics/Bitmap;->createBitmap([IIILandroid/graphics/Bitmap$Config;)"):
+            frames += [(class_of(f), m) for m in re.findall(r"^\.method public static final (\w+)\(" + re.escape(sheet)
+                                                            + r"L[^;]+;L[^;]+;\)Ljava/util/ArrayList;$", f.read_text(), re.M)]
+        if len(frames) != 1:
+            raise PatchError(f"кадры Clawd в Bitmap: найдено {len(frames)}")
+        names.update(CLAWD_ANIM=anim, CLAWD_SHEET=sheets[0][0], CLAWD_FRAMES=frames[0][0], CLAWD_FRAMES_METHOD=frames[0][1])
+    except PatchError as e:
+        log(f"  анимации Clawd не найдены ({e}), Clawd не будет реагировать на ответы")
     return names
 
 
@@ -1147,6 +1243,8 @@ def main():
         names = patch_drawer(sm)
         patch_translate(sm)
         patch_prompt(sm)
+        patch_rest_body(sm)
+        log("  шрифты: Typeface.Builder(assets) %d, вызовов %d" % patch_fonts(sm))
         names.update(patch_models(sm))
         names.update(find_clawd(sm))
         names.update(patch_chat_menu(sm, dec))

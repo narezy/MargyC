@@ -14,6 +14,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.Window;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -28,12 +29,15 @@ public final class ModsActivity extends Activity {
     private Ui.Row presetRow, presetTextRow, accentRow, darkRow, lightRow;
     private View accentSwatch;
     private LinearLayout fakeGroup, pluginGroup;
-    private static final int PICK_PLUGIN = 7, PICK_MD = 8;
+    private static final int PICK_PLUGIN = 7, PICK_MD = 8, PICK_FONT = 9;
     // кодовые точки Material Icons (Round), шрифт в app-assets
     private static final int IC_LANG = 0xe8e2, IC_ACCENT = 0xe40a, IC_THEME = 0xe243, IC_DARK = 0xe51c,
             IC_LIGHT = 0xe518, IC_COPY = 0xf08a, IC_PASTE = 0xf098, IC_AUTHOR = 0xe0b7, IC_PROMPT = 0xea4a,
             IC_PRESET = 0xe429, IC_PRESET_TEXT = 0xf1c6, IC_PET = 0xe91d, IC_ADD = 0xe145, IC_JOURNAL = 0xe889,
-            IC_INSTALL = 0xe87b, IC_DOCS = 0xea19, IC_DOWNLOAD = 0xf090, IC_OPEN = 0xe873;
+            IC_INSTALL = 0xe87b, IC_DOCS = 0xea19, IC_DOWNLOAD = 0xf090, IC_OPEN = 0xe873, IC_GALLERY = 0xe41d,
+            IC_FONT = 0xe167, IC_REACT = 0xea65, IC_LOCK = 0xe897, IC_TIMER = 0xe425, IC_RECENTS = 0xe8f5,
+            IC_CATALOG = 0xea12, IC_UPDATE = 0xe923, IC_BETA = 0xea4b;
+    private Ui.Row fontRow, lockTimeRow, updateRow;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,6 +59,8 @@ public final class ModsActivity extends Activity {
         content.addView(shareGroup(), gap);
         content.addView(ui.sectionTitle(L.t("Питомец")));
         content.addView(petGroup());
+        content.addView(ui.sectionTitle(L.t("Защита")));
+        content.addView(lockGroup());
         content.addView(ui.sectionTitle("Claude"));
         content.addView(promptGroup());
         content.addView(ui.sectionTitle(L.t("Мемные модели")));
@@ -67,9 +73,13 @@ public final class ModsActivity extends Activity {
         content.addView(pluginGroup);
 
         content.addView(ui.sectionTitle("MargyC"));
-        content.addView(linksGroup());
+        content.addView(updateGroup());
+        LinearLayout.LayoutParams gap2 = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        gap2.topMargin = ui.dp(12);
+        content.addView(linksGroup(), gap2);
 
-        TextView footer = ui.label("MargyC " + Mods.VERSION + L.t(" от narezany"), 13, ui.secondary, ui.regular);
+        TextView footer = ui.label("MargyC " + Mods.label() + L.t(" от narezany"), 13, ui.secondary, ui.regular);
         footer.setGravity(Gravity.CENTER);
         footer.setLineSpacing(ui.dp(3), 1f);
         footer.setPadding(0, ui.dp(32), 0, ui.dp(8));
@@ -198,6 +208,16 @@ public final class ModsActivity extends Activity {
 
     private View shareGroup() {
         LinearLayout g = ui.column();
+        Ui.Row gallery = ui.new Row(L.t("Галерея тем"), L.t("Готовые темы: AMOLED, Material You, Catppuccin, Nord и другие."));
+        gallery.icon(IC_GALLERY);
+        gallery.chevron();
+        gallery.setOnClickListener(v -> openGallery());
+        g.addView(gallery);
+        fontRow = ui.new Row(L.t("Шрифт"), "");
+        fontRow.icon(IC_FONT);
+        fontRow.chevron();
+        fontRow.setOnClickListener(v -> chooseFont());
+        g.addView(fontRow);
         Ui.Row copy = ui.new Row(L.t("Скопировать мою тему"), L.t("Текстом, чтобы отправить другу."));
         copy.setOnClickListener(v -> {
             String theme = Theme.export();
@@ -567,6 +587,18 @@ public final class ModsActivity extends Activity {
         });
         pet.icon(IC_PET);
         g.addView(pet);
+        Ui.Row react = ui.new Row(L.t("Реагирует на ответы"),
+                L.t("Пока Claude отвечает, Clawd печатает на ноутбуке, а потом прыгает или танцует. Анимации — самого Claude."));
+        react.toggle(Pet.reacts(), true, on -> {
+            try {
+                Pet.setReacts(on);
+                return true;
+            } catch (Exception e) {
+                return false;
+            }
+        });
+        react.icon(IC_REACT);
+        g.addView(react);
         ui.restyle(g);
         return g;
     }
@@ -753,6 +785,11 @@ public final class ModsActivity extends Activity {
             row.setOnClickListener(v -> openPlugin(info));
             pluginGroup.addView(row);
         }
+        Ui.Row catalog = ui.new Row(L.t("Каталог модов"), L.t("Моды из репозитория MargyC: установка в одно касание."));
+        catalog.icon(IC_CATALOG);
+        catalog.chevron();
+        catalog.setOnClickListener(v -> openCatalog());
+        pluginGroup.addView(catalog);
         Ui.Row install = ui.new Row(L.t("Установить мод"), L.t("Файл .mcmod: скомпилированный мод с manifest.json."));
         install.setOnClickListener(v -> {
             Intent pick = new Intent(Intent.ACTION_OPEN_DOCUMENT).addCategory(Intent.CATEGORY_OPENABLE).setType("*/*");
@@ -869,6 +906,20 @@ public final class ModsActivity extends Activity {
     @Override
     protected void onActivityResult(int request, int result, Intent data) {
         super.onActivityResult(request, result, data);
+        if (request == PICK_FONT && result == RESULT_OK && data != null && data.getData() != null) {
+            try (java.io.InputStream in = getContentResolver().openInputStream(data.getData())) {
+                Font.install(this, in);
+                Font.setChoice(Font.FILE);
+                Mods.needRestart();
+                refresh();
+            } catch (Exception e) {
+                Log.e(Mods.TAG, "font", e);
+                ui.new Sheet(L.t("Не получилось"))
+                        .message(L.t("Шрифт не подошёл: ") + e.getMessage())
+                        .button(L.t("Понятно"), true, null).show();
+            }
+            return;
+        }
         if (request == PICK_MD && result == RESULT_OK && data != null && data.getData() != null) {
             try (java.io.InputStream in = getContentResolver().openInputStream(data.getData())) {
                 java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();
@@ -1020,6 +1071,304 @@ public final class ModsActivity extends Activity {
         group.addView(row, 0);
     }
 
+    // ---- галерея тем и шрифт ----
+
+    private void openGallery() {
+        final Ui.Sheet sheet = ui.new Sheet(L.t("Галерея тем"));
+        for (final Gallery.Preset p : Gallery.all(this)) {
+            sheet.view(presetRow(p.name, p.description, p.preview(ui.night), v -> {
+                try {
+                    Gallery.apply(p);
+                } catch (Exception e) {
+                    Log.e(Mods.TAG, "gallery", e);
+                }
+                sheet.dialog.dismiss();
+                Mods.needRestart();
+                recreate();
+            }));
+        }
+        sheet.view(presetRow(L.t("Как в Claude"), L.t("Обычные цвета: своя тема и акцент выключаются."), null, v -> {
+            try {
+                Gallery.reset();
+            } catch (Exception e) {
+                Log.e(Mods.TAG, "gallery reset", e);
+            }
+            sheet.dialog.dismiss();
+            Mods.needRestart();
+            recreate();
+        }));
+        sheet.button(L.t("Закрыть"), true, null);
+        sheet.show();
+    }
+
+    /** Строка галереи: кружки цветов темы (фон, карточка, текст, акцент), название и описание. */
+    private View presetRow(String title, String sub, int[] colors, View.OnClickListener click) {
+        LinearLayout row = new LinearLayout(this);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setGravity(Gravity.CENTER_VERTICAL);
+        row.setPadding(ui.dp(4), ui.dp(10), ui.dp(4), ui.dp(10));
+        row.setBackground(ui.ripple(ui.round(Color.TRANSPARENT, 12), 12));
+        LinearLayout dots = new LinearLayout(this);
+        dots.setOrientation(LinearLayout.HORIZONTAL);
+        int[] cs = colors != null ? colors : new int[] {Theme.resolve(0xFF151515, true), Theme.resolve(0xFF20201F, true),
+                0xFFF9F9F7, 0xFFD97757};
+        for (int i = 0; i < cs.length; i++) {
+            View dot = new View(this);
+            GradientDrawable d = new GradientDrawable();
+            d.setShape(GradientDrawable.OVAL);
+            d.setColor(cs[i]);
+            d.setStroke(ui.dp(1), ui.divider);
+            dot.setBackground(d);
+            LinearLayout.LayoutParams dl = new LinearLayout.LayoutParams(ui.dp(22), ui.dp(22));
+            dl.leftMargin = i == 0 ? 0 : -ui.dp(7);
+            dots.addView(dot, dl);
+        }
+        LinearLayout.LayoutParams dsl = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT);
+        dsl.rightMargin = ui.dp(14);
+        row.addView(dots, dsl);
+        LinearLayout texts = ui.column();
+        texts.addView(ui.label(title, 17, ui.text, ui.regular));
+        TextView st = ui.label(sub, 13, ui.secondary, ui.regular);
+        st.setPadding(0, ui.dp(2), 0, 0);
+        texts.addView(st);
+        row.addView(texts, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
+        row.setOnClickListener(click);
+        return row;
+    }
+
+    private static String fontName(String choice) {
+        switch (choice) {
+            case Font.SANS:
+                return L.t("Системный");
+            case Font.SERIF:
+                return L.t("С засечками (системный)");
+            case Font.APP_SERIF:
+                return L.t("С засечками Claude");
+            case Font.MONO:
+                return L.t("Моноширинный");
+            case Font.FILE:
+                return L.t("Свой файл");
+            default:
+                return L.t("Как в Claude");
+        }
+    }
+
+    private void chooseFont() {
+        final Ui.Sheet sheet = ui.new Sheet(L.t("Шрифт"));
+        String current = Font.choice();
+        String[][] options = {
+                {Font.NONE, L.t("Anthropic Sans в интерфейсе, Anthropic Serif в ответах.")},
+                {Font.SANS, L.t("Шрифт телефона (обычно Roboto или шрифт прошивки).")},
+                {Font.APP_SERIF, L.t("Anthropic Serif, шрифт ответов Claude, во всём приложении.")},
+                {Font.SERIF, L.t("Системный шрифт с засечками.")},
+                {Font.MONO, L.t("Как в терминале. Код остаётся своим шрифтом в любом случае.")},
+                {Font.FILE, L.t("Файл .ttf или .otf с телефона.")}};
+        for (final String[] o : options) {
+            sheet.item(fontName(o[0]), o[1], o[0].equals(current), v -> {
+                sheet.dialog.dismiss();
+                if (o[0].equals(Font.FILE)) {
+                    Intent pick = new Intent(Intent.ACTION_OPEN_DOCUMENT).addCategory(Intent.CATEGORY_OPENABLE).setType("*/*");
+                    try {
+                        startActivityForResult(pick, PICK_FONT);
+                    } catch (Exception e) {
+                        Toast.makeText(this, L.t("Нет приложения для выбора файла"), Toast.LENGTH_SHORT).show();
+                    }
+                    return;
+                }
+                try {
+                    Font.setChoice(o[0]);
+                } catch (Exception ignored) {
+                }
+                Mods.needRestart();
+                refresh();
+            });
+        }
+        sheet.show();
+    }
+
+    // ---- защита ----
+
+    private View lockGroup() {
+        final LinearLayout g = ui.column();
+        Ui.Row lock = ui.new Row(L.t("Блокировка"),
+                L.t("Claude открывается по отпечатку, лицу или PIN-коду телефона."));
+        lock.toggle(Lock.enabled(), true, on -> {
+            String why = on ? Lock.unavailable(this) : null;
+            if (why != null) {
+                ui.new Sheet(L.t("Блокировку не включить")).message(why).button(L.t("Понятно"), true, null).show();
+                return false;
+            }
+            try {
+                Lock.setEnabled(on);
+                lockTimeRow.setVisibility(on ? View.VISIBLE : View.GONE);
+                ui.restyle(g);
+                return true;
+            } catch (Exception e) {
+                return false;
+            }
+        });
+        lock.icon(IC_LOCK);
+        g.addView(lock);
+        lockTimeRow = ui.new Row(L.t("Спрашивать снова"), "");
+        lockTimeRow.icon(IC_TIMER);
+        lockTimeRow.chevron();
+        lockTimeRow.setOnClickListener(v -> {
+            final Ui.Sheet sheet = ui.new Sheet(L.t("Спрашивать снова через"));
+            for (final int t : Lock.TIMEOUTS) {
+                sheet.item(Lock.timeoutLabel(t), t == 0 ? L.t("Каждый раз, когда Claude уходит в фон.") : null,
+                        t == Lock.timeout(), x -> {
+                            try {
+                                Lock.setTimeout(t);
+                            } catch (Exception ignored) {
+                            }
+                            sheet.dialog.dismiss();
+                            refresh();
+                        });
+            }
+            sheet.show();
+        });
+        g.addView(lockTimeRow);
+        lockTimeRow.setVisibility(Lock.enabled() ? View.VISIBLE : View.GONE);
+        Ui.Row recents = ui.new Row(L.t("Скрывать в недавних"),
+                L.t("В списке открытых приложений вместо снимка чата пусто."));
+        recents.toggle(Lock.hideRecents(), true, on -> {
+            try {
+                Lock.setHideRecents(on);
+                return true;
+            } catch (Exception e) {
+                return false;
+            }
+        });
+        recents.icon(IC_RECENTS);
+        g.addView(recents);
+        ui.restyle(g);
+        return g;
+    }
+
+    // ---- обновления ----
+
+    private View updateGroup() {
+        LinearLayout g = ui.column();
+        updateRow = ui.new Row(L.t("Обновления"), "");
+        updateRow.icon(IC_UPDATE);
+        updateRow.chevron();
+        updateRow.setOnClickListener(v -> {
+            updateRow.sub(L.t("Проверяю…"), 2);
+            Update.check(true, info -> {
+                if (isFinishing()) {
+                    return;
+                }
+                showUpdate();
+                if (info != null) {
+                    Update.sheet(this, info, false);
+                } else if (Update.error() != null) {
+                    Toast.makeText(this, L.t("Не получилось проверить: ") + Update.error(), Toast.LENGTH_LONG).show();
+                } else {
+                    Toast.makeText(this, L.t("У тебя последняя версия"), Toast.LENGTH_SHORT).show();
+                }
+            });
+        });
+        g.addView(updateRow);
+        Ui.Row beta = ui.new Row(L.t("Бета-версии"),
+                L.t("Новые функции раньше всех, но в бете бывают ошибки. Ставится поверх, настройки сохраняются."));
+        beta.toggle(Update.betas(), true, on -> {
+            try {
+                Update.setBetas(on);
+                showUpdate();
+                return true;
+            } catch (Exception e) {
+                return false;
+            }
+        });
+        beta.icon(IC_BETA);
+        g.addView(beta);
+        ui.restyle(g);
+        return g;
+    }
+
+    private void showUpdate() {
+        if (updateRow == null) {
+            return;
+        }
+        Update.Info info = Update.available();
+        updateRow.sub(info != null ? L.t("Вышла ") + info.label() + L.t(". Нажми, чтобы скачать.")
+                : L.t("У тебя ") + Mods.label() + L.t(". Нажми, чтобы проверить."), 2);
+    }
+
+    // ---- каталог модов ----
+
+    private void openCatalog() {
+        final Ui.Sheet sheet = ui.new Sheet(L.t("Каталог модов"));
+        final TextView status = ui.label(L.t("Загружаю…"), 15, ui.secondary, ui.regular);
+        sheet.view(status);
+        final LinearLayout list = ui.column();
+        sheet.view(list);
+        sheet.button(L.t("Закрыть"), true, null);
+        sheet.show();
+        Catalog.load((entries, error) -> {
+            if (isFinishing()) {
+                return;
+            }
+            if (entries == null) {
+                status.setText(L.t("Не получилось загрузить каталог: ") + error);
+                return;
+            }
+            status.setVisibility(entries.isEmpty() ? View.VISIBLE : View.GONE);
+            status.setText(L.t("В каталоге пока пусто."));
+            for (final Catalog.Entry e : entries) {
+                Plugins.Info have = Catalog.installed(this, e.id);
+                String state = have == null ? L.t("Установить")
+                        : have.version.equals(e.version) ? L.t("Установлен") : L.t("Обновить до v") + e.version;
+                String sub = (e.author.isEmpty() ? "" : e.author + " · ") + (e.version.isEmpty() ? "" : "v" + e.version)
+                        + "\n" + e.description + "\n" + state;
+                final boolean done = have != null && have.version.equals(e.version);
+                final View[] row = new View[1];
+                row[0] = sheet.item(e.name, sub.trim(), done, v -> {
+                    if (done) {
+                        return;
+                    }
+                    row[0].setEnabled(false);
+                    row[0].setAlpha(0.5f);
+                    Catalog.install(this, e, (info, err) -> {
+                        if (isFinishing()) {
+                            return;
+                        }
+                        sheet.dialog.dismiss();
+                        if (info == null) {
+                            ui.new Sheet(L.t("Не установился")).message(String.valueOf(err))
+                                    .button(L.t("Понятно"), true, null).show();
+                            return;
+                        }
+                        Mods.needRestart();
+                        refresh();
+                        ui.new Sheet(L.t("Мод установлен"))
+                                .message(info.name + L.t(". Он заработает после перезапуска Claude."))
+                                .button(L.t("Готово"), true, null).show();
+                    });
+                });
+                ((ViewGroup) row[0].getParent()).removeView(row[0]);
+                list.addView(row[0]);
+                if (row[0] instanceof LinearLayout) {
+                    TextView s2 = findSub((LinearLayout) row[0]);
+                    if (s2 != null) {
+                        s2.setMaxLines(4);
+                    }
+                }
+            }
+        });
+    }
+
+    /** Подпись пункта списка окна (Ui.Sheet.item ограничивает её двумя строками). */
+    private static TextView findSub(LinearLayout row) {
+        View texts = row.getChildAt(0);
+        if (texts instanceof LinearLayout && ((LinearLayout) texts).getChildCount() > 1
+                && ((LinearLayout) texts).getChildAt(1) instanceof TextView) {
+            return (TextView) ((LinearLayout) texts).getChildAt(1);
+        }
+        return null;
+    }
+
     // ----
 
     private void refresh() {
@@ -1042,6 +1391,9 @@ public final class ModsActivity extends Activity {
         accentSwatch.setVisibility(Theme.accentOn() ? View.VISIBLE : View.GONE);
         darkRow.sub(count(true), 1);
         lightRow.sub(count(false), 1);
+        fontRow.sub(fontName(Font.choice()), 1);
+        lockTimeRow.sub(Lock.timeoutLabel(Lock.timeout()), 1);
+        showUpdate();
     }
 
     private String count(boolean dark) {

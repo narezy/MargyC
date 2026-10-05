@@ -28,6 +28,9 @@ public final class Fake {
 
     /** Мемная модель, выбранная для текущего SendMessage: ModelId создаётся прямо перед ним. */
     private static final ThreadLocal<Model> sending = new ThreadLocal<Model>();
+    /** Когда создали ModelId: ModelId бывает и без сообщения (смена модели), старый на потоке не годится. */
+    private static final ThreadLocal<Long> sendingAt = new ThreadLocal<Long>();
+    private static final long SENDING_TTL = 3000;
     /** ModelId для сообщения создали, но модель настоящая. */
     private static final Model NONE = new Model("", "", "", "", "");
 
@@ -164,6 +167,7 @@ public final class Fake {
         try {
             Model m = byId(id);
             sending.set(m != null ? m : NONE);
+            sendingAt.set(System.currentTimeMillis());
             log("send " + id + (m != null ? " -> " + m.base : ""));
             if (m != null) {
                 select(m.id);
@@ -203,10 +207,26 @@ public final class Fake {
     }
 
     /**
+     * Тап по модели в меню выбора: пользователь выбрал её сам. Мемная запоминается, настоящая сбрасывает
+     * мемную, даже если это та самая модель, на которой мемная отвечает.
+     */
+    public static void picked(String id) {
+        try {
+            if (id == null) {
+                return;
+            }
+            Model m = byId(id);
+            log("menu tap " + id);
+            select(m != null ? m.id : "");
+        } catch (Throwable ignored) {
+        }
+    }
+
+    /**
      * Выбор модели в чате (для нового чата, для следующего сообщения, в состоянии чата). Приложение
      * выставляет его и само, после ответа — настоящей моделью беседы. Поэтому мемная здесь только
      * запоминается, а настоящая модель выбранной мемной превращается обратно в мемную; сбрасывает
-     * мемную только явный выбор другой модели в меню (сохранение выбора на сервер, {@link #remember}).
+     * мемную явный выбор другой модели в меню ({@link #picked}, {@link #remember}).
      */
     public static String pick(String id) {
         try {
@@ -263,7 +283,12 @@ public final class Fake {
      */
     static String prompt() {
         Model m = sending.get();
+        Long at = sendingAt.get();
         sending.remove(); // при копировании запроса ModelId не создаётся заново
+        sendingAt.remove();
+        if (m != null && (at == null || System.currentTimeMillis() - at > SENDING_TTL)) {
+            m = null; // ModelId остался от смены модели, а не от этого сообщения
+        }
         try {
             if (m == null) {
                 m = selected();

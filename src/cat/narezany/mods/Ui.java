@@ -90,6 +90,10 @@ final class Ui {
 
     private Typeface font(int weight) {
         try {
+            Typeface chosen = Font.typeface(weight, false); // мод «Шрифт»: экраны мода тоже
+            if (chosen != null) {
+                return chosen;
+            }
             return new Typeface.Builder(ctx.getAssets(), FONT).setFontVariationSettings("'wght' " + weight).build();
         } catch (Throwable t) {
             return Typeface.create(weight >= 500 ? "sans-serif-medium" : "sans-serif", Typeface.NORMAL);

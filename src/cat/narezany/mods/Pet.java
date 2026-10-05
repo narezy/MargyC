@@ -32,7 +32,11 @@ import java.util.List;
  * (вдоль поля и немного выше-ниже), коснуться — анимация заново.
  *
  * Сам Clawd — Compose-функция приложения с его анимациями (та, что на экранах загрузки), её рисует
- * ComposeView мода. Если она не нашлась или упала, рисуется свой пиксельный Clawd.
+ * ComposeView мода. Если она не нашлась или упала, Clawd не показывается: своего мод не рисует.
+ *
+ * Реакции — тоже анимации приложения (кадры Clawd из его же листов): пока Claude отвечает, Clawd печатает
+ * на ноутбуке, а когда ответ готов — прыгает или пританцовывает. Что Claude отвечает, видно по кнопке
+ * «Остановить» у поля ввода.
  *
  * Где поле ввода: карта узлов semantics из делегата специальных возможностей AndroidComposeView.
  * Без включённых служб он её не обновляет, поэтому перед каждым опросом мод помечает её устаревшей.
@@ -60,7 +64,7 @@ public final class Pet {
     /** Application.onCreate, после CrashLog. */
     public static void install(Application app) {
         try {
-            // прошлый запуск упал, пока рисовался Clawd приложения: дальше только свой
+            // прошлый запуск упал, пока рисовался Clawd приложения: больше не пробовать (до выключения-включения)
             if (Mods.prefs().getBoolean("pet_compose_trying", false)) {
                 Mods.prefs().edit().putBoolean("pet_compose_trying", false).putBoolean("pet_compose_broken", true).commit();
             }
@@ -83,6 +87,9 @@ public final class Pet {
                             return;
                         }
                         layer = new Layer(a);
+                        if (layer.app == null) {
+                            return; // Clawd приложения недоступен: своего не рисуем
+                        }
                         content.addView(layer, new FrameLayout.LayoutParams(
                                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
                     }
@@ -136,6 +143,10 @@ public final class Pet {
         private int polls;
         private String state = "";
         float frac, lift;
+        private final View app;
+        private Frames reaction;
+        private int busy; // сколько опросов подряд Claude отвечает (+) или нет (-)
+        private boolean working;
 
         private final Runnable tick = new Runnable() {
             @Override
@@ -168,7 +179,10 @@ public final class Pet {
                 frac = 0.9f;
             }
             box = new Box(a);
-            box.addView(clawd(a), new FrameLayout.LayoutParams(w, h));
+            app = clawd(a);
+            if (app != null) {
+                box.addView(app, new FrameLayout.LayoutParams(w, h));
+            }
             box.setVisibility(INVISIBLE);
             addView(box, new FrameLayout.LayoutParams(w, h));
         }
@@ -203,6 +217,9 @@ public final class Pet {
                 return;
             }
             box.setVisibility(VISIBLE);
+            if (polls % 10 == 0) {
+                react();
+            }
             anchorY = top - h + dp(4);
             if (!box.dragging) {
                 box.setTranslationX(frac * (getWidth() - w));
@@ -210,6 +227,41 @@ public final class Pet {
                 if (Math.abs(box.getTranslationY() - y) > 1) {
                     box.setTranslationY(y);
                 }
+            }
+        }
+
+        /** Claude отвечает — Clawd печатает; закончил — прыгает или танцует, потом снова сам по себе. */
+        private void react() {
+            if (!reacts() || host == null || !semantics.works) {
+                return;
+            }
+            boolean now = semantics.has(host, stopLabel(activity));
+            busy = now ? Math.max(1, busy + 1) : Math.min(-1, busy - 1);
+            if (!working && busy >= 2) {
+                working = true;
+                Fake.log("clawd: Claude is answering");
+                play(Frames.make(getContext(), "Laptop", 17, 34, 0));
+            } else if (working && busy <= -2) {
+                working = false;
+                Fake.log("clawd: answer is ready");
+                boolean dance = Math.random() < 0.4;
+                play(dance ? Frames.make(getContext(), "Dancing", 8, 39, 1) : Frames.make(getContext(), "Jumping", 0, 20, 2));
+            }
+        }
+
+        /** Реакция поверх Clawd приложения (он прячется, но живёт дальше); null — убрать реакцию. */
+        void play(Frames f) {
+            if (reaction != null) {
+                box.removeView(reaction);
+                reaction = null;
+            }
+            if (f != null) {
+                reaction = f;
+                f.done = () -> play(null);
+                box.addView(f, new FrameLayout.LayoutParams(w, h));
+            }
+            if (app != null) {
+                app.setVisibility(reaction != null ? INVISIBLE : VISIBLE);
             }
         }
 
@@ -319,26 +371,7 @@ public final class Pet {
                     nodes = dc.getDeclaredMethod(Names.SEMANTICS_NODES);
                     nodes.setAccessible(true);
                 }
-                stale.setBoolean(delegate, true);
-                Object map = nodes.invoke(delegate);
-                int[] keys = null;
-                Object[] values = null;
-                for (Class<?> c = map.getClass(); c != null; c = c.getSuperclass()) {
-                    for (Field f : c.getDeclaredFields()) {
-                        if (Modifier.isStatic(f.getModifiers())) {
-                            continue;
-                        }
-                        f.setAccessible(true);
-                        if (f.getType() == int[].class) {
-                            keys = (int[]) f.get(map);
-                        } else if (f.getType() == Object[].class) {
-                            values = (Object[]) f.get(map);
-                        }
-                    }
-                }
-                if (keys == null || values == null) {
-                    throw new IllegalStateException("не разобрал карту узлов");
-                }
+                load();
                 AccessibilityNodeProvider provider = host.getAccessibilityNodeProvider();
                 int best = Integer.MIN_VALUE;
                 Rect bestRect = null;
@@ -367,6 +400,61 @@ public final class Pet {
                 works = false;
                 return null;
             }
+        }
+
+        private int[] keys;
+        private Object[] values;
+
+        /** Свежая карта узлов: ключи — id, значения — узел с границами. */
+        private void load() throws Exception {
+            stale.setBoolean(delegate, true);
+            Object map = nodes.invoke(delegate);
+            keys = null;
+            values = null;
+            for (Class<?> c = map.getClass(); c != null; c = c.getSuperclass()) {
+                for (Field f : c.getDeclaredFields()) {
+                    if (Modifier.isStatic(f.getModifiers())) {
+                        continue;
+                    }
+                    f.setAccessible(true);
+                    if (f.getType() == int[].class) {
+                        keys = (int[]) f.get(map);
+                    } else if (f.getType() == Object[].class) {
+                        values = (Object[]) f.get(map);
+                    }
+                }
+            }
+            if (keys == null || values == null) {
+                throw new IllegalStateException("не разобрал карту узлов");
+            }
+        }
+
+        /** Есть ли в нижней половине экрана узел с таким описанием (кнопка «Остановить» у поля ввода). */
+        boolean has(View host, String description) {
+            if (delegate == null || description == null || description.isEmpty()) {
+                return false;
+            }
+            try {
+                load();
+                AccessibilityNodeProvider provider = host.getAccessibilityNodeProvider();
+                if (provider == null) {
+                    return false;
+                }
+                for (int i = 0; i < values.length && i < keys.length; i++) {
+                    if (values[i] == null || !bounds(values[i]) || rect.top < host.getHeight() / 2
+                            || rect.width() > host.getWidth() / 3) {
+                        continue; // кнопка: маленькая и внизу
+                    }
+                    AccessibilityNodeInfo n = provider.createAccessibilityNodeInfo(keys[i]);
+                    CharSequence d = n != null ? n.getContentDescription() : null;
+                    if (d != null && description.contentEquals(d)) {
+                        return true;
+                    }
+                }
+            } catch (Throwable t) {
+                Log.e(Mods.TAG, "Clawd: stop button", t);
+            }
+            return false;
         }
 
         /** Широкий узел в нижних двух третях экрана. */
@@ -488,11 +576,10 @@ public final class Pet {
                         } catch (Exception ignored) {
                         }
                     } else if (e.getActionMasked() == MotionEvent.ACTION_UP) {
-                        // касание — Clawd заново играет свою анимацию: новый ComposeView начинает её сначала
-                        View old = getChildAt(0);
-                        android.view.ViewGroup.LayoutParams lp = old.getLayoutParams();
-                        removeView(old);
-                        addView(clawd(getContext()), lp);
+                        // касание — прыжок из анимаций Clawd (если он не занят ответом Claude)
+                        if (!layer.working) {
+                            layer.play(Frames.make(getContext(), "Jumping", 0, 20, 1));
+                        }
                     }
                     return true;
                 default:
@@ -514,8 +601,8 @@ public final class Pet {
             Log.e(Mods.TAG, "Clawd приложения", t);
             Fake.log("clawd: app's Clawd failed: " + t);
         }
-        Fake.log("clawd: pixel Clawd");
-        return new PixelClawd(ctx);
+        Fake.log("clawd: app's Clawd is not available");
+        return null;
     }
 
     /**
@@ -590,58 +677,139 @@ public final class Pet {
         return null;
     }
 
-    /** Свой пиксельный Clawd, если Clawd приложения недоступен: в акцентном цвете, моргает и перебирает лапками. */
-    static final class PixelClawd extends View {
-        private static final String[] SPRITE = {
-                "..##########..",
-                "..##########..",
-                "..#E######E#..",
-                "..#E######E#..",
-                "##############",
-                "##############",
-                "..##########..",
-                "..##########..",
-                "..#.#....#.#..",
-                "..#.#....#.#..",
-        };
-        private final Paint body = new Paint();
-        private final Paint eye = new Paint();
-        private final long born = System.currentTimeMillis();
+    // ---- реакции: кадры анимаций Clawd из приложения ----
 
-        PixelClawd(Context ctx) {
+    static boolean reacts() {
+        try {
+            return Mods.prefs().getBoolean("pet_react", true);
+        } catch (Exception e) {
+            return true;
+        }
+    }
+
+    static void setReacts(boolean on) throws Exception {
+        Mods.prefs().edit().putBoolean("pet_react", on).apply();
+    }
+
+    private static String stop;
+
+    /** Подпись кнопки «Остановить» у поля ввода, на языке приложения. */
+    private static String stopLabel(Context ctx) {
+        if (stop == null) {
+            int id = ctx.getResources().getIdentifier("chat_input_stop_button_content_description", "string",
+                    ctx.getPackageName());
+            stop = id != 0 ? ctx.getString(id) : "";
+        }
+        return stop;
+    }
+
+    private static final java.util.Map<String, List<android.graphics.Bitmap>> SHEETS =
+            new java.util.HashMap<String, List<android.graphics.Bitmap>>();
+
+    /**
+     * Кадры анимации Clawd приложения (Jumping, Dancing, Laptop, Guitar, NodOff, Sleep, WakeUp, Warning):
+     * лист кадров анимации, превращённый в Bitmap той же функцией приложения, с его палитрой, полный кадр 55×37.
+     */
+    static synchronized List<android.graphics.Bitmap> sheet(String name) throws Exception {
+        List<android.graphics.Bitmap> cached = SHEETS.get(name);
+        if (cached != null) {
+            return cached;
+        }
+        if (Names.CLAWD_ANIM.isEmpty()) {
+            throw new IllegalStateException("нет анимаций Clawd");
+        }
+        Object anim = null;
+        for (Object c : Class.forName(Names.CLAWD_ANIM).getEnumConstants()) {
+            if (((Enum<?>) c).name().equals(name)) {
+                anim = c;
+            }
+        }
+        if (anim == null) {
+            throw new IllegalStateException("нет анимации " + name);
+        }
+        Method sheetMethod = anim.getClass().getMethod(Names.CLAWD_SHEET);
+        Object sheet = sheetMethod.invoke(anim);
+        Method frames = null;
+        for (Method m : Class.forName(Names.CLAWD_FRAMES).getDeclaredMethods()) {
+            if (m.getName().equals(Names.CLAWD_FRAMES_METHOD) && m.getParameterTypes().length == 3
+                    && m.getParameterTypes()[0] == sheetMethod.getReturnType()) {
+                frames = m;
+            }
+        }
+        if (frames == null) {
+            throw new NoSuchMethodException(Names.CLAWD_FRAMES + "." + Names.CLAWD_FRAMES_METHOD);
+        }
+        frames.setAccessible(true);
+        Class<?> paletteClass = frames.getParameterTypes()[1];
+        Object palette = singleton(paletteClass);
+        Object crop = frames.getParameterTypes()[2].getConstructor(int.class, int.class, int.class, int.class)
+                .newInstance(0, 0, 55, 37);
+        List<android.graphics.Bitmap> out = new ArrayList<android.graphics.Bitmap>();
+        for (Object f : (List<?>) frames.invoke(null, sheet, palette, crop)) {
+            for (Field field : f.getClass().getDeclaredFields()) {
+                if (field.getType() == android.graphics.Bitmap.class) {
+                    field.setAccessible(true);
+                    out.add((android.graphics.Bitmap) field.get(f));
+                }
+            }
+        }
+        if (out.isEmpty()) {
+            throw new IllegalStateException("пустая анимация " + name);
+        }
+        SHEETS.put(name, out);
+        return out;
+    }
+
+    /** Проигрыватель кадров Clawd, 12 кадров в секунду, пиксели без сглаживания. */
+    static final class Frames extends View {
+        private final List<android.graphics.Bitmap> frames;
+        private final int first, last, loops; // loops == 0 — без конца
+        private final Paint paint = new Paint();
+        private final Rect src = new Rect(), dst = new Rect();
+        private final long born = android.os.SystemClock.uptimeMillis();
+        Runnable done;
+
+        private Frames(Context ctx, List<android.graphics.Bitmap> frames, int first, int last, int loops) {
             super(ctx);
-            body.setColor(Theme.accentOn() ? Theme.accent() : 0xFFD97757);
-            body.setAntiAlias(false);
-            eye.setColor(0xFF1A1A1A);
-            eye.setAntiAlias(false);
+            this.frames = frames;
+            this.first = Math.max(0, Math.min(first, frames.size() - 1));
+            this.last = Math.max(this.first, Math.min(last, frames.size() - 1));
+            this.loops = loops;
+            paint.setFilterBitmap(false);
+            paint.setAntiAlias(false);
+        }
+
+        /** null, если анимаций нет: тогда реакции просто не будет. */
+        static Frames make(Context ctx, String name, int first, int last, int loops) {
+            try {
+                return new Frames(ctx, sheet(name), first, last, loops);
+            } catch (Throwable t) {
+                Log.e(Mods.TAG, "Clawd " + name, t);
+                Fake.log("clawd: animation " + name + " failed: " + t);
+                return null;
+            }
         }
 
         @Override
         protected void onDraw(Canvas c) {
-            long t = System.currentTimeMillis() - born;
-            int cols = SPRITE[0].length(), rows = SPRITE.length;
-            // целый размер пикселя, иначе между клетками видны щели
-            int px = Math.max(1, Math.min(getWidth() / cols, getHeight() / (rows + 1)));
-            int ox = (getWidth() - px * cols) / 2;
-            int oy = getHeight() - px * rows - ((t / 600) % 2 == 0 ? px / 2 : 0);
-            boolean blink = t % 4200 < 160;
-            boolean step = (t / 300) % 2 == 0;
-            for (int y = 0; y < rows; y++) {
-                for (int x = 0; x < cols; x++) {
-                    char ch = SPRITE[y].charAt(x);
-                    if (ch == '.') {
-                        continue;
-                    }
-                    int dy = 0;
-                    if (y >= rows - 2) { // лапки по очереди
-                        boolean left = x < cols / 2;
-                        dy = (left == step) ? -px / 2 : 0;
-                    }
-                    Paint p = ch == 'E' && !blink ? eye : body;
-                    c.drawRect(ox + x * px, oy + y * px + dy, ox + (x + 1) * px, oy + (y + 1) * px + dy, p);
+            int count = last - first + 1;
+            long n = (android.os.SystemClock.uptimeMillis() - born) * 12 / 1000;
+            if (loops > 0 && n >= (long) count * loops) {
+                if (done != null) {
+                    Runnable r = done;
+                    done = null;
+                    post(r);
                 }
+                n = count - 1;
             }
-            postInvalidateDelayed(80);
+            android.graphics.Bitmap b = frames.get(first + (int) (n % count));
+            // целый масштаб, по низу: лапки стоят на рамке поля, как у Clawd приложения
+            int scale = Math.max(1, Math.min(getWidth() / b.getWidth(), getHeight() / b.getHeight()));
+            int bw = b.getWidth() * scale, bh = b.getHeight() * scale;
+            src.set(0, 0, b.getWidth(), b.getHeight());
+            dst.set((getWidth() - bw) / 2, getHeight() - bh, (getWidth() + bw) / 2, getHeight());
+            c.drawBitmap(b, src, dst, paint);
+            postInvalidateOnAnimation();
         }
     }
 }
