@@ -1,0 +1,12 @@
+{
+  "mods": [
+    {
+      "id": "hello",
+      "name": "Hello, MargyC",
+      "description": "Example mod: Claude calls you by a nickname and can talk like a pirate.",
+      "author": "narezany",
+      "version": "1.0",
+      "file": "hello.mcmod"
+    }
+  ]
+}
