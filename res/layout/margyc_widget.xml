@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Виджет MargyC: Clawd из анимаций приложения, приветствие и сообщения за сегодня. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/margyc_widget_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/margyc_widget_bg"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:padding="12dp">
+
+    <ImageView
+        android:id="@+id/margyc_widget_clawd"
+        android:layout_width="80dp"
+        android:layout_height="54dp"
+        android:contentDescription="Clawd"
+        android:scaleType="fitCenter"
+        android:src="@drawable/margyc_icon_fg_clawd" />
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="12dp"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/margyc_widget_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:maxLines="2"
+            android:text="Claude"
+            android:textColor="@color/margyc_widget_text"
+            android:textSize="16sp" />
+
+        <TextView
+            android:id="@+id/margyc_widget_sub"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:ellipsize="end"
+            android:maxLines="2"
+            android:textColor="@color/margyc_widget_secondary"
+            android:textSize="13sp" />
+    </LinearLayout>
+</LinearLayout>

@@ -197,7 +197,14 @@ def patch_manifest(dec):
         'android:theme="@android:style/Theme.DeviceDefault"/>\n'
         '        <activity android:exported="false" android:excludeFromRecents="true" '
         'android:name="cat.narezany.mods.InfoActivity" '
-        'android:theme="@android:style/Theme.Translucent.NoTitleBar"/>\n')
+        'android:theme="@android:style/Theme.Translucent.NoTitleBar"/>\n'
+        '        <activity android:exported="false" android:name="cat.narezany.mods.GameActivity" '
+        'android:screenOrientation="unspecified" '
+        'android:theme="@android:style/Theme.DeviceDefault.NoActionBar"/>\n'
+        '        <receiver android:exported="true" android:label="Clawd" android:name="cat.narezany.mods.Widget">\n'
+        '            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE"/></intent-filter>\n'
+        '            <meta-data android:name="android.appwidget.provider" android:resource="@xml/margyc_widget_info"/>\n'
+        '        </receiver>\n')
     if "cat.narezany.mods.ModsActivity" not in s:
         s = sub_once(s, r"(\n\s*</application>)", "\n" + activities.rstrip("\n") + r"\1", "манифест")
     m.write_text(s)
@@ -239,7 +246,8 @@ def patch_resources(dec):
         for f in (HERE / "app-assets").iterdir():
             shutil.copy(f, dec / "assets/margyc" / f.name)
 
-    for src in sorted((HERE / "res").glob("values-*")):
+    # переводы (values-*) и свои ресурсы: виджет (layout, xml, drawable, color)
+    for src in sorted(d for d in (HERE / "res").iterdir() if d.is_dir()):
         dst = dec / "res" / src.name
         dst.mkdir(exist_ok=True)
         for f in src.glob("*.xml"):

@@ -39,7 +39,8 @@ public final class ModsActivity extends Activity {
             IC_CATALOG = 0xea12, IC_UPDATE = 0xe923, IC_BETA = 0xea4b, IC_CARD = 0xe870, IC_DONATE = 0xea70,
             IC_LICENSE = 0xe90c, IC_ICON = 0xe5c3, IC_WALLPAPER = 0xe3f4, IC_STREAMER = 0xe8f4, IC_GREETING = 0xe769,
             IC_SEASON = 0xeb3b, IC_SPLASH = 0xeb9b, IC_COUNTER = 0xeac7, IC_STATS = 0xf092, IC_SHARE = 0xe80d,
-            IC_DELETE = 0xe872, IC_SEARCH = 0xe8b6;
+            IC_DELETE = 0xe872, IC_SEARCH = 0xe8b6, IC_WIDGET = 0xe1bd,
+            IC_GAME = 0xea28;
     private static final int PICK_WALLPAPER = 10;
     private Ui.Row fontRow, lockTimeRow, updateRow, langRow, iconRow, wallpaperRow, greetingRow, seasonRow, statsRow;
     private boolean searchOnly; // открыт поиск по чату из меню «⋮», без настроек
@@ -673,8 +674,36 @@ public final class ModsActivity extends Activity {
         });
         react.icon(IC_REACT);
         g.addView(react);
+        Ui.Row widget = ui.new Row(L.t("Виджет на рабочий стол"),
+                L.t("Clawd с приветствием и сообщениями за сегодня. Ночью спит, днём за ноутбуком; коснись — подпрыгнет."));
+        widget.icon(IC_WIDGET);
+        widget.chevron();
+        widget.setOnClickListener(v -> addWidget());
+        g.addView(widget);
+        Ui.Row game = ui.new Row(L.t("Игра с Clawd"), L.t("Прыгай через баги. Коснись экрана — Clawd подпрыгнет."));
+        game.icon(IC_GAME);
+        game.chevron();
+        game.setOnClickListener(v -> startActivity(new Intent(this, GameActivity.class)));
+        g.addView(game);
         ui.restyle(g);
         return g;
+    }
+
+    private void addWidget() {
+        android.appwidget.AppWidgetManager mgr = android.appwidget.AppWidgetManager.getInstance(this);
+        boolean asked = false;
+        try {
+            if (mgr.isRequestPinAppWidgetSupported()) {
+                asked = mgr.requestPinAppWidget(new android.content.ComponentName(this, Widget.class), null, null);
+            }
+        } catch (Exception e) {
+            Log.e(Mods.TAG, "widget pin", e);
+        }
+        if (!asked) {
+            ui.new Sheet(L.t("Виджет на рабочий стол"))
+                    .message(L.t("Зажми пустое место на рабочем столе, выбери «Виджеты» и найди Clawd в списке MargyC."))
+                    .button(L.t("Понятно"), true, null).show();
+        }
     }
 
     // ---- мемные модели ----

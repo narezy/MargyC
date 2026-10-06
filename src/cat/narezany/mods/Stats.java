@@ -57,6 +57,7 @@ final class Stats {
                 o.put("since", day);
             }
             Mods.prefs().edit().putString("stats", o.toString()).apply();
+            Widget.refresh(Mods.app());
         } catch (Throwable ignored) {
         }
     }
