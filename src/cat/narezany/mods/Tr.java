@@ -35,10 +35,14 @@ public final class Tr {
         if (s == null) {
             return null;
         }
+        if (s.indexOf(Greeting.MARK) >= 0) {
+            s = Greeting.show(s);
+        }
         String r = RU.get(s);
         if (r != null && "ru".equals(Locale.getDefault().getLanguage())) {
             s = r;
         }
+        s = Streamer.mask(s);
         return Plugins.TEXTS.isEmpty() ? s : Plugins.text(s);
     }
 }

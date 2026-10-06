@@ -66,12 +66,22 @@ public final class Theme {
 
     private static long themed(long packed, Map<Integer, Integer> map) {
         load();
-        if (!customOn || (packed & 0x3F) != 0) {
-            return packed; // своя тема выключена или цвет не в sRGB
+        if ((packed & 0x3F) != 0) {
+            return packed; // цвет не в sRGB
         }
         int argb = (int) (packed >>> 32);
         Integer original = ORIGINAL.get(argb);
-        Integer c = map.get(original != null ? original : argb);
+        int base = original != null ? original : argb;
+        boolean dark = map == DARK;
+        // обои: фон экрана делаем прозрачным, чтобы была видна картинка под Compose
+        if (Wallpaper.enabled() && !Wallpaper.choice().isEmpty()
+                && base == (dark ? Wallpaper.BG_DARK : Wallpaper.BG_LIGHT)) {
+            return 0L; // прозрачный (Color 0x00000000)
+        }
+        if (!customOn) {
+            return packed;
+        }
+        Integer c = map.get(base);
         return c == null ? packed : ((long) c) << 32;
     }
 
@@ -123,6 +133,11 @@ public final class Theme {
 
     static void setCustom(boolean on) throws Exception {
         Mods.prefs().edit().putBoolean("theme_on", on).commit();
+        loaded = false;
+    }
+
+    /** Перечитать настройки при следующем обращении (например, после включения обоев). */
+    static void reload() {
         loaded = false;
     }
 

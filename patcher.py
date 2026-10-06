@@ -440,6 +440,26 @@ def patch_fonts(sm):
     return ctors, calls + main
 
 
+def patch_account(sm):
+    """Режим стримера и свои приветствия. Account: имя и почта — в Streamer.seen (только чтение).
+    GreetingSlot.text (приветствие главного экрана приходит с сервера) — через Greeting.slot."""
+    acc = Serial(sm, "com.anthropic.claude.api.account.Account")
+    code = ""
+    for e in ("email_address", "full_name", "display_name"):
+        if e in acc.elements and acc.types[acc.elements.index(e) + 1] == "Ljava/lang/String;":
+            r = acc.reg(e)
+            code += f"invoke-static/range {{p{r} .. p{r}}}, {MOD}Streamer;->seen(Ljava/lang/String;)V\n\n    "
+    if not code:
+        raise PatchError("Account: нет полей имени и почты")
+    acc.hook(code)
+    slot = Serial(sm, "com.anthropic.claude.api.account.GreetingSlot")
+    if "text" not in slot.elements or slot.types[slot.elements.index("text") + 1] != "Ljava/lang/String;":
+        raise PatchError("GreetingSlot: нет text: String")
+    r = slot.reg("text")
+    slot.hook(f"invoke-static/range {{p{r} .. p{r}}}, {MOD}Greeting;->slot(Ljava/lang/String;)Ljava/lang/String;\n\n"
+              f"    move-result-object p{r}\n")
+
+
 def patch_rest_body(sm):
     """Старый движок чата (SSE_STORE, у аккаунтов без hub) шлёт ChatCompletionRequest в REST /completion, а там
     hidden_context нет. Готовый JSON тела запроса проходит через Prompt.body: тот дописывает пресет и промпт
@@ -1275,6 +1295,7 @@ def main():
         patch_translate(sm)
         patch_prompt(sm)
         patch_rest_body(sm)
+        patch_account(sm)
         log("  шрифты: Typeface.Builder(assets) %d, вызовов %d" % patch_fonts(sm))
         names.update(patch_models(sm))
         names.update(find_clawd(sm))

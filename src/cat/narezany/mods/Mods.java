@@ -98,6 +98,11 @@ public final class Mods {
         } catch (Throwable t) {
             Log.e(TAG, "Update", t);
         }
+        try {
+            Wallpaper.install(app);
+        } catch (Throwable t) {
+            Log.e(TAG, "Wallpaper", t);
+        }
     }
 
     private static SharedPreferences prefs;
