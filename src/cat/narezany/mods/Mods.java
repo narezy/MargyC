@@ -11,9 +11,9 @@ import java.lang.reflect.Method;
 /** Общие штуки мода: открыть экран модов, настройки, язык приложения, перезапуск. */
 public final class Mods {
     static final String TAG = "MargyC";
-    static final String VERSION = "1.2"; // версия MargyC, не Claude
+    static final String VERSION = "1.3"; // версия MargyC, не Claude
     /** Номер беты этой версии, 0 — релиз. */
-    static final int BETA = 0;
+    static final int BETA = 1;
     /**
      * Номер сборки для проверки обновлений: 1.2 beta 1 = 10201, 1.2 = 10299. Релиз той же версии
      * больше любой её беты, поэтому бета-тестерам предлагается и он.

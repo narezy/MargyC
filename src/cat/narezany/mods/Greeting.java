@@ -107,6 +107,9 @@ public final class Greeting {
                 int colon = l.indexOf(':');
                 String key = colon > 0 ? l.substring(0, colon).trim().toLowerCase(java.util.Locale.ROOT) : "";
                 int k = java.util.Arrays.asList(keys).indexOf(key);
+                if (k < 0) { // в английском интерфейсе подсказка с английскими ключами
+                    k = java.util.Arrays.asList("morning", "day", "evening", "night").indexOf(key);
+                }
                 if (k >= 0) {
                     if (k == b) {
                         out.add(l.substring(colon + 1).trim());
