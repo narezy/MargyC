@@ -216,8 +216,10 @@ def patch_manifest(dec):
 def patch_resources(dec):
     lc = dec / "res/xml/locales_config.xml"
     s = lc.read_text()
-    if 'android:name="ru"' not in s:
-        lc.write_text(sub_once(s, r"(\n\s*</locale-config>)", '\n    <locale android:name="ru" />\\1', "locales_config"))
+    for lang in [d.name[len("values-"):] for d in sorted((HERE / "res").glob("values-*"))]:
+        if f'android:name="{lang}"' not in s:
+            s = sub_once(s, r"(\n\s*</locale-config>)", f'\n    <locale android:name="{lang}" />\\1', "locales_config")
+    lc.write_text(s)
 
     st = dec / "res/values/strings.xml"
     st.write_text(re.sub(r'<string name="app_name">[^<]*</string>',
@@ -237,10 +239,11 @@ def patch_resources(dec):
         for f in (HERE / "app-assets").iterdir():
             shutil.copy(f, dec / "assets/margyc" / f.name)
 
-    ru = dec / "res/values-ru"
-    ru.mkdir(exist_ok=True)
-    for f in (HERE / "res/values-ru").glob("*.xml"):
-        shutil.copy(f, ru / f.name)
+    for src in sorted((HERE / "res").glob("values-*")):
+        dst = dec / "res" / src.name
+        dst.mkdir(exist_ok=True)
+        for f in src.glob("*.xml"):
+            shutil.copy(f, dst / f.name)
 
     # apktool превращает размеченные plurals (<annotation role="verb">) в простой текст с &lt;...>,
     # и в приложении теги видны буквами. Возвращаем настоящие теги во всех языках.
@@ -256,6 +259,73 @@ def patch_resources(dec):
         t = f.read_text(errors="ignore")
         if "glance_isTopLevelLayout" in t:
             f.write_text(re.sub(r' app:glance_isTopLevelLayout="[^"]*"', "", t))
+
+
+ICONS = [  # id, фон, передний план (spark — звезда Claude, clawd — пиксельный Clawd из icons/)
+    ("margyc", "#ff8fd2b1", "spark"),
+    ("claude", "#ffd97757", "spark"),
+    ("forest", "#ff1f5c45", "spark"),
+    ("amoled", "#ff000000", "spark"),
+    ("clawd", "#fffaf3e8", "clawd"),
+    ("clawd_dark", "#ff151515", "clawd"),
+]
+MAIN_ACTIVITY = "com.anthropic.claude.mainactivity.MainActivity"
+
+
+def patch_icons(dec):
+    """Выбор иконки: на каждый вариант адаптивная иконка и activity-alias главного экрана с LAUNCHER.
+    Включён один (по умолчанию margyc), остальные выключены; мод переключает их через PackageManager.
+    У самой MainActivity LAUNCHER убирается, иначе на рабочем столе было бы две иконки."""
+    drawable = dec / "res/drawable"
+    anydpi = dec / "res/mipmap-anydpi-v26"
+    anydpi.mkdir(parents=True, exist_ok=True)
+    shutil.copy(HERE / "icons/margyc_icon_fg_clawd.xml", drawable / "margyc_icon_fg_clawd.xml")
+    for icon_id, color, fg in ICONS:
+        (drawable / f"margyc_icon_bg_{icon_id}.xml").write_text(
+            '<?xml version="1.0" encoding="utf-8"?>\n'
+            '<vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="108dp" '
+            'android:height="108dp" android:viewportWidth="108" android:viewportHeight="108">\n'
+            f'    <path android:fillColor="{color}" android:pathData="M0,0h108v108h-108z" />\n'
+            '</vector>\n')
+        fg_res = "@drawable/ic_launcher_foreground" if fg == "spark" else "@drawable/margyc_icon_fg_clawd"
+        (anydpi / f"margyc_icon_{icon_id}.xml").write_text(
+            '<?xml version="1.0" encoding="utf-8"?>\n'
+            '<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">\n'
+            f'    <background android:drawable="@drawable/margyc_icon_bg_{icon_id}" />\n'
+            f'    <foreground android:drawable="{fg_res}" />\n'
+            f'    <monochrome android:drawable="{fg_res}" />\n'
+            '</adaptive-icon>\n')
+
+    m = dec / "AndroidManifest.xml"
+    s = m.read_text()
+    act = re.search(r'(<activity[^>]*android:name="' + re.escape(MAIN_ACTIVITY) + r'"[^>]*>)([\s\S]*?)(</activity>)', s)
+    if not act:
+        raise PatchError("иконки: нет MainActivity")
+    body = act.group(2)
+    launcher = re.search(r'\s*<intent-filter>\s*<action android:name="android.intent.action.MAIN"/>\s*'
+                         r'<category android:name="android.intent.category.LAUNCHER"/>\s*</intent-filter>', body)
+    if not launcher:
+        raise PatchError("иконки: у MainActivity нет MAIN/LAUNCHER")
+    shortcuts = re.search(r'\s*<meta-data android:name="android.app.shortcuts"[^>]*/>', body)
+    new_body = body.replace(launcher.group(0), "")
+    if shortcuts:
+        new_body = new_body.replace(shortcuts.group(0), "")
+    aliases = ""
+    for icon_id, _, _ in ICONS:
+        aliases += (f'\n        <activity-alias android:name="cat.narezany.mods.icon.{icon_id}" '
+                    f'android:targetActivity="{MAIN_ACTIVITY}" android:exported="true" '
+                    f'android:enabled="{"true" if icon_id == ICONS[0][0] else "false"}" '
+                    f'android:icon="@mipmap/margyc_icon_{icon_id}" android:roundIcon="@mipmap/margyc_icon_{icon_id}" '
+                    'android:label="@string/app_name">\n'
+                    '            <intent-filter>\n'
+                    '                <action android:name="android.intent.action.MAIN"/>\n'
+                    '                <category android:name="android.intent.category.LAUNCHER"/>\n'
+                    '            </intent-filter>\n'
+                    + (f'            {shortcuts.group(0).strip()}\n' if shortcuts else "")
+                    + '        </activity-alias>')
+    s = s.replace(act.group(0), act.group(1) + new_body + act.group(3) + aliases, 1)
+    m.write_text(s)
+    log(f"  иконки: {len(ICONS)} вариантов")
 
 
 def patch_install_source(sm):
@@ -1288,6 +1358,7 @@ def main():
         log("патчи")
         app = patch_manifest(dec)
         patch_resources(dec)
+        patch_icons(dec)
         sm = Smali(dec)
         patch_install_source(sm)
         patch_crash_log(sm, app)

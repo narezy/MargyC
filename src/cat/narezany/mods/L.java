@@ -14,10 +14,15 @@ final class L {
 
     static boolean ru() {
         try {
-            return Mods.app().getResources().getConfiguration().getLocales().get(0).getLanguage().equals("ru");
+            return slavic(Mods.app().getResources().getConfiguration().getLocales().get(0).getLanguage());
         } catch (Exception e) {
-            return java.util.Locale.getDefault().getLanguage().equals("ru");
+            return slavic(java.util.Locale.getDefault().getLanguage());
         }
+    }
+
+    /** Для белорусского и казахского экраны мода по-русски: так понятнее, чем по-английски. */
+    private static boolean slavic(String lang) {
+        return lang.equals("ru") || lang.equals("be") || lang.equals("kk");
     }
 
     static String t(String ru) {

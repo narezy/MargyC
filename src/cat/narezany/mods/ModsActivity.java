@@ -37,8 +37,9 @@ public final class ModsActivity extends Activity {
             IC_INSTALL = 0xe87b, IC_DOCS = 0xea19, IC_DOWNLOAD = 0xf090, IC_OPEN = 0xe873, IC_GALLERY = 0xe41d,
             IC_FONT = 0xe167, IC_REACT = 0xea65, IC_LOCK = 0xe897, IC_TIMER = 0xe425, IC_RECENTS = 0xe8f5,
             IC_CATALOG = 0xea12, IC_UPDATE = 0xe923, IC_BETA = 0xea4b, IC_CARD = 0xe870, IC_DONATE = 0xea70,
-            IC_LICENSE = 0xe90c;
-    private Ui.Row fontRow, lockTimeRow, updateRow;
+            IC_LICENSE = 0xe90c, IC_ICON = 0xe5c3, IC_WALLPAPER = 0xe3f4, IC_STREAMER = 0xe8f4, IC_GREETING = 0xe769;
+    private static final int PICK_WALLPAPER = 10;
+    private Ui.Row fontRow, lockTimeRow, updateRow, langRow, iconRow, wallpaperRow, greetingRow;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -120,22 +121,40 @@ public final class ModsActivity extends Activity {
 
     private View languageGroup() {
         LinearLayout g = ui.column();
-        Ui.Row ru = ui.new Row(L.t("Русский язык"), Mods.localeSupported()
-                ? (Mods.systemRussian()
-                        ? L.t("Весь интерфейс на русском. Выключишь — будет английский.")
-                        : L.t("Весь интерфейс на русском. Выключишь — вернётся язык системы."))
-                : L.t("Нужен Android 13 или новее. На старых версиях поставь русский языком системы, перевод подхватится сам."));
-        ru.toggle(Mods.isRussian(this), Mods.localeSupported(), on -> {
-            if (Mods.setRussian(this, on)) {
-                return true;
+        langRow = ui.new Row(L.t("Язык приложения"), "");
+        langRow.icon(IC_LANG);
+        langRow.chevron();
+        langRow.setOnClickListener(v -> {
+            if (!Mods.localeSupported()) {
+                ui.new Sheet(L.t("Язык приложения"))
+                        .message(L.t("Нужен Android 13 или новее. На старых версиях поставь нужный язык языком системы, перевод подхватится сам."))
+                        .button(L.t("Понятно"), true, null).show();
+                return;
             }
-            Toast.makeText(this, L.t("Не получилось сменить язык"), Toast.LENGTH_SHORT).show();
-            return false;
+            final Ui.Sheet sheet = ui.new Sheet(L.t("Язык приложения"));
+            String current = Mods.language(this);
+            for (final String[] lang : Mods.LANGUAGES) {
+                sheet.item(lang[0].isEmpty() ? L.t(lang[1]) : lang[1], null, lang[0].equals(current), x -> {
+                    sheet.dialog.dismiss();
+                    if (!Mods.setLanguage(this, lang[0])) {
+                        Toast.makeText(this, L.t("Не получилось сменить язык"), Toast.LENGTH_SHORT).show();
+                    }
+                });
+            }
+            sheet.show();
         });
-        ru.icon(IC_LANG);
-        g.addView(ru);
+        g.addView(langRow);
         ui.restyle(g);
         return g;
+    }
+
+    private static String languageName(String tag) {
+        for (String[] lang : Mods.LANGUAGES) {
+            if (lang[0].equals(tag)) {
+                return lang[0].isEmpty() ? L.t(lang[1]) : lang[1];
+            }
+        }
+        return tag;
     }
 
     // ---- оформление ----
@@ -219,6 +238,21 @@ public final class ModsActivity extends Activity {
         gallery.chevron();
         gallery.setOnClickListener(v -> openGallery());
         g.addView(gallery);
+        wallpaperRow = ui.new Row(L.t("Обои в чате"), "");
+        wallpaperRow.icon(IC_WALLPAPER);
+        wallpaperRow.chevron();
+        wallpaperRow.setOnClickListener(v -> openWallpaper());
+        g.addView(wallpaperRow);
+        iconRow = ui.new Row(L.t("Иконка приложения"), "");
+        iconRow.icon(IC_ICON);
+        iconRow.chevron();
+        iconRow.setOnClickListener(v -> chooseIcon());
+        g.addView(iconRow);
+        greetingRow = ui.new Row(L.t("Приветствие"), "");
+        greetingRow.icon(IC_GREETING);
+        greetingRow.chevron();
+        greetingRow.setOnClickListener(v -> chooseGreeting());
+        g.addView(greetingRow);
         fontRow = ui.new Row(L.t("Шрифт"), "");
         fontRow.icon(IC_FONT);
         fontRow.chevron();
@@ -898,6 +932,21 @@ public final class ModsActivity extends Activity {
     @Override
     protected void onActivityResult(int request, int result, Intent data) {
         super.onActivityResult(request, result, data);
+        if (request == PICK_WALLPAPER && result == RESULT_OK && data != null && data.getData() != null) {
+            try (java.io.InputStream in = getContentResolver().openInputStream(data.getData())) {
+                Wallpaper.install(this, in);
+                Wallpaper.setChoice("file");
+                Wallpaper.setEnabled(true);
+                Mods.needRestart();
+                refresh();
+            } catch (Exception e) {
+                Log.e(Mods.TAG, "wallpaper", e);
+                ui.new Sheet(L.t("Не получилось"))
+                        .message(L.t("Картинка не подошла: ") + e.getMessage())
+                        .button(L.t("Понятно"), true, null).show();
+            }
+            return;
+        }
         if (request == PICK_FONT && result == RESULT_OK && data != null && data.getData() != null) {
             try (java.io.InputStream in = getContentResolver().openInputStream(data.getData())) {
                 Font.install(this, in);
@@ -1061,6 +1110,136 @@ public final class ModsActivity extends Activity {
         ui.restyle(tmp);
         tmp.removeView(row);
         group.addView(row, 0);
+    }
+
+    // ---- обои, иконка, приветствие ----
+
+    private String wallpaperName() {
+        String c = Wallpaper.choice();
+        if (!Wallpaper.enabled() || c.isEmpty()) {
+            return L.t("Выключены");
+        }
+        if (c.equals("file")) {
+            return L.t("Своя картинка");
+        }
+        Wallpaper.Preset p = Wallpaper.preset(c.substring(c.indexOf(':') + 1));
+        return p != null ? p.name : c;
+    }
+
+    private void openWallpaper() {
+        final Ui.Sheet sheet = ui.new Sheet(L.t("Обои в чате"));
+        String current = Wallpaper.enabled() ? Wallpaper.choice() : "";
+        sheet.item(L.t("Выключены"), L.t("Обычный фон Claude."), current.isEmpty(), v -> {
+            try {
+                Wallpaper.setEnabled(false);
+            } catch (Exception ignored) {
+            }
+            sheet.dialog.dismiss();
+            Mods.needRestart();
+            refresh();
+        });
+        for (final Wallpaper.Preset p : Wallpaper.presets()) {
+            sheet.view(presetRow(p.name, L.t("Градиент"), p.colors.length >= 3
+                    ? new int[] {p.colors[0], p.colors[1], p.colors[2]} : new int[] {p.colors[0], p.colors[1]}, v -> {
+                try {
+                    Wallpaper.setChoice("preset:" + p.id);
+                    Wallpaper.setEnabled(true);
+                } catch (Exception ignored) {
+                }
+                sheet.dialog.dismiss();
+                Mods.needRestart();
+                refresh();
+            }));
+        }
+        sheet.item(L.t("Своя картинка…"), L.t("Фото из галереи. Под чатом, карточки сообщений остаются как есть."),
+                current.equals("file"), v -> {
+                    sheet.dialog.dismiss();
+                    Intent pick = new Intent(Intent.ACTION_OPEN_DOCUMENT).addCategory(Intent.CATEGORY_OPENABLE).setType("image/*");
+                    try {
+                        startActivityForResult(pick, PICK_WALLPAPER);
+                    } catch (Exception e) {
+                        Toast.makeText(this, L.t("Нет приложения для выбора файла"), Toast.LENGTH_SHORT).show();
+                    }
+                });
+        sheet.item(L.t("Затемнение: ") + Wallpaper.dim() + "%", L.t("Насколько приглушить обои, чтобы текст читался."), false, v -> {
+            sheet.dialog.dismiss();
+            final Ui.Sheet pick = ui.new Sheet(L.t("Затемнение"));
+            for (final int d : new int[] {0, 25, 40, 55, 70, 85}) {
+                pick.item(d + "%", null, d == Wallpaper.dim(), x -> {
+                    try {
+                        Wallpaper.setDim(d);
+                    } catch (Exception ignored) {
+                    }
+                    pick.dialog.dismiss();
+                    Mods.needRestart();
+                });
+            }
+            pick.show();
+        });
+        sheet.button(L.t("Закрыть"), true, null);
+        sheet.show();
+    }
+
+    private void chooseIcon() {
+        final Ui.Sheet sheet = ui.new Sheet(L.t("Иконка приложения"));
+        String current = Icons.current(this);
+        for (int i = 0; i < Icons.ALL.length; i++) {
+            final String id = Icons.ALL[i][0];
+            boolean clawd = id.startsWith("clawd");
+            sheet.view(presetRow(Icons.name(id) + (id.equals(current) ? "  ✓" : ""),
+                    clawd ? L.t("Пиксельный Clawd") : L.t("Звезда Claude"),
+                    new int[] {Icons.COLORS[i], clawd ? 0xFFF05A40 : 0xFFFFFFFF}, v -> {
+                        Icons.set(this, id);
+                        sheet.dialog.dismiss();
+                        refresh();
+                        ui.new Sheet(L.t("Иконка сменена"))
+                                .message(L.t("Лаунчеру может понадобиться несколько секунд. Если иконка пропала с рабочего стола, добавь её заново из списка приложений."))
+                                .button(L.t("Понятно"), true, null).show();
+                    }));
+        }
+        sheet.button(L.t("Закрыть"), true, null);
+        sheet.show();
+    }
+
+    private static String greetingName(String mode) {
+        return Greeting.RUSSIAN.equals(mode) ? L.t("По-русски, по времени суток")
+                : Greeting.CUSTOM.equals(mode) ? L.t("Свои фразы") : L.t("Как в Claude");
+    }
+
+    private void chooseGreeting() {
+        final Ui.Sheet sheet = ui.new Sheet(L.t("Приветствие"));
+        String mode = Greeting.mode();
+        sheet.item(greetingName(Greeting.CLAUDE), L.t("Приходит с сервера Claude, обычно по-английски."),
+                Greeting.CLAUDE.equals(mode), v -> setGreeting(sheet, Greeting.CLAUDE));
+        sheet.item(greetingName(Greeting.RUSSIAN), L.t("«Доброе утро», «Добрый вечер», «Не спится?» и другие, с твоим именем."),
+                Greeting.RUSSIAN.equals(mode), v -> setGreeting(sheet, Greeting.RUSSIAN));
+        sheet.item(greetingName(Greeting.CUSTOM), L.t("Свой список. Строка — фраза; «утро:», «день:», «вечер:», «ночь:» в начале — для времени суток; {name} — имя."),
+                Greeting.CUSTOM.equals(mode), v -> {
+                    sheet.dialog.dismiss();
+                    final EditText field = ui.field(Greeting.custom(), L.t("утро: Доброе утро, {name}\nвечер: Как прошёл день?\nПривет!"), true);
+                    ui.new Sheet(L.t("Свои фразы")).view(field)
+                            .button(L.t("Отмена"), false, null)
+                            .button(L.t("Сохранить"), true, () -> {
+                                try {
+                                    Greeting.setCustom(field.getText().toString());
+                                    Greeting.setMode(Greeting.CUSTOM);
+                                } catch (Exception ignored) {
+                                }
+                                Mods.needRestart();
+                                refresh();
+                            }).show();
+                });
+        sheet.show();
+    }
+
+    private void setGreeting(Ui.Sheet sheet, String mode) {
+        try {
+            Greeting.setMode(mode);
+        } catch (Exception ignored) {
+        }
+        sheet.dialog.dismiss();
+        Mods.needRestart();
+        refresh();
     }
 
     // ---- донаты, лицензия, журнал ----
@@ -1293,6 +1472,19 @@ public final class ModsActivity extends Activity {
         });
         recents.icon(IC_RECENTS);
         g.addView(recents);
+        Ui.Row streamer = ui.new Row(L.t("Режим стримера"),
+                L.t("Твои имя и почта скрыты везде в Claude, включая приветствие на главном экране. После перезапуска."));
+        streamer.toggle(Streamer.enabled(), true, on -> {
+            try {
+                Streamer.setEnabled(on);
+                Mods.needRestart();
+                return true;
+            } catch (Exception e) {
+                return false;
+            }
+        });
+        streamer.icon(IC_STREAMER);
+        g.addView(streamer);
         ui.restyle(g);
         return g;
     }
@@ -1443,6 +1635,10 @@ public final class ModsActivity extends Activity {
         darkRow.sub(count(true), 1);
         lightRow.sub(count(false), 1);
         fontRow.sub(fontName(Font.choice()), 1);
+        langRow.sub(languageName(Mods.language(this)), 1);
+        iconRow.sub(Icons.name(Icons.current(this)), 1);
+        wallpaperRow.sub(wallpaperName(), 1);
+        greetingRow.sub(greetingName(Greeting.mode()), 1);
         lockTimeRow.sub(Lock.timeoutLabel(Lock.timeout()), 1);
         showUpdate();
     }

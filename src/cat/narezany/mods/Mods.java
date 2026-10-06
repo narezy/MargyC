@@ -200,6 +200,48 @@ public final class Mods {
                 .getLanguage().equals("ru");
     }
 
+    /** Языки приложения: тег и название на самом языке. Пустой тег — язык системы. */
+    static final String[][] LANGUAGES = {
+            {"", "Как в системе"}, {"en", "English"}, {"ru", "Русский"}, {"be", "Беларуская"}, {"kk", "Қазақша"}};
+
+    /** Язык, выбранный для приложения, или "" (язык системы). */
+    static String language(Context ctx) {
+        if (!localeSupported()) {
+            return "";
+        }
+        try {
+            Object lm = localeManager(ctx);
+            Object list = lm.getClass().getMethod("getApplicationLocales").invoke(lm);
+            String tags = (String) list.getClass().getMethod("toLanguageTags").invoke(list);
+            if (tags == null || tags.isEmpty()) {
+                return "";
+            }
+            String first = tags.split(",")[0];
+            return first.contains("-") ? first.substring(0, first.indexOf('-')) : first;
+        } catch (Throwable t) {
+            Log.e(TAG, "getApplicationLocales", t);
+            return "";
+        }
+    }
+
+    static boolean setLanguage(Context ctx, String tag) {
+        if (!localeSupported()) {
+            return false;
+        }
+        try {
+            Class<?> localeList = Class.forName("android.os.LocaleList");
+            Object list = tag.isEmpty() ? localeList.getMethod("getEmptyLocaleList").invoke(null)
+                    : localeList.getMethod("forLanguageTags", String.class).invoke(null, tag);
+            Object lm = localeManager(ctx);
+            lm.getClass().getMethod("setApplicationLocales", localeList).invoke(lm, list);
+            Journal.log("language: " + (tag.isEmpty() ? "system" : tag));
+            return true;
+        } catch (Throwable t) {
+            Log.e(TAG, "setApplicationLocales", t);
+            return false;
+        }
+    }
+
     static boolean setRussian(Context ctx, boolean enabled) {
         if (!localeSupported()) {
             return false;
