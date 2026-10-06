@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="max_upsell_feature_list_default">
+        <item>Claude-пен үзіліссіз жұмыс істеу үшін әлдеқайда жоғары лимиттер</item>
+        <item>Пайдалануды өз міндеттеріңізге қарай кеңейтіңіз</item>
+        <item>Claude-тың ең озық мүмкіндіктерін бірінші болып сынап көріңіз</item>
+    </string-array>
+    <string-array name="onboarding_v2_subscription_free_features">
+        <item>Пайдалы ЖИ көмекшісі Claude-пен сөйлесу</item>
+        <item>Талдау үшін файлдар мен суреттерді жүктеу</item>
+        <item>Пайдаланудың негізгі лимиттері</item>
+    </string-array>
+    <string-array name="pro_upsell_feature_list_default">
+        <item>Claude-пен жұмысты жаңа деңгейге көтеріңіз</item>
+        <item>Ең ақылды модельдерімізге қолжетімділік</item>
+        <item>Жүктеме шыңы кезінде басым қолжетімділік</item>
+        <item>Жаңа функцияларға ерте қолжетімділік</item>
+    </string-array>
+    <string-array name="thinking_timeline_verbs">
+        <item>Ойлануда</item>
+        <item>Електен өткізуде</item>
+        <item>Зерделеуде</item>
+        <item>Жетілдіруде</item>
+        <item>Салмақтауда</item>
+        <item>Толғануда</item>
+        <item>Ой елегінен өткізуде</item>
+        <item>Пайымдауда</item>
+        <item>Елестетуде</item>
+        <item>Ой жүгіртуде</item>
+        <item>Шамалауда</item>
+        <item>Есептеуде</item>
+        <item>Ми шайқауда</item>
+        <item>Триангуляциялауда</item>
+        <item>Кристалдандыруда</item>
+        <item>Зерттеуде</item>
+        <item>Шешуде</item>
+    </string-array>
+</resources>

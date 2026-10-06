@@ -1,0 +1,987 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="artifact_gallery_views">
+        <item quantity="one">%1$d прагляд</item>
+        <item quantity="few">%1$d прагляды</item>
+        <item quantity="many">%1$d праглядаў</item>
+        <item quantity="other">%1$d прагляду</item>
+    </plurals>
+    <plurals name="artifact_pill_view_artifacts">
+        <item quantity="one">Адкрыць артэфакт</item>
+        <item quantity="few">Адкрыць артэфакты</item>
+        <item quantity="many">Адкрыць артэфакты</item>
+        <item quantity="other">Адкрыць артэфакты</item>
+    </plurals>
+    <plurals name="buy_credits_granted_added">
+        <item quantity="one">Дададзена %1$d крэдыт.</item>
+        <item quantity="few">Дададзена %1$d крэдыты.</item>
+        <item quantity="many">Дададзена %1$d крэдытаў.</item>
+        <item quantity="other">Дададзена %1$d крэдыту.</item>
+    </plurals>
+    <plurals name="buy_credits_pack_amount">
+        <item quantity="one">%1$d крэдыт</item>
+        <item quantity="few">%1$d крэдыты</item>
+        <item quantity="many">%1$d крэдытаў</item>
+        <item quantity="other">%1$d крэдыту</item>
+    </plurals>
+    <plurals name="calendar_creating_events">
+        <item quantity="one">Стварыць %d падзею</item>
+        <item quantity="few">Стварыць %d падзеі</item>
+        <item quantity="many">Стварыць %d падзей</item>
+        <item quantity="other">Стварыць %d падзеі</item>
+    </plurals>
+    <plurals name="calendar_deleting_events">
+        <item quantity="one">Выдаліць %d падзею</item>
+        <item quantity="few">Выдаліць %d падзеі</item>
+        <item quantity="many">Выдаліць %d падзей</item>
+        <item quantity="other">Выдаліць %d падзеі</item>
+    </plurals>
+    <plurals name="calendar_event_create_status_created">
+        <item quantity="one">Створана %1$d падзея</item>
+        <item quantity="few">Створана %1$d падзеі</item>
+        <item quantity="many">Створана %1$d падзей</item>
+        <item quantity="other">Створана %1$d падзеі</item>
+    </plurals>
+    <plurals name="calendar_event_create_status_failed_count">
+        <item quantity="one">Не ўдалося стварыць %1$d падзею</item>
+        <item quantity="few">Не ўдалося стварыць %1$d падзеі</item>
+        <item quantity="many">Не ўдалося стварыць %1$d падзей</item>
+        <item quantity="other">Не ўдалося стварыць %1$d падзеі</item>
+    </plurals>
+    <plurals name="calendar_event_delete_status_deleted">
+        <item quantity="one">Выдалена %1$d падзея</item>
+        <item quantity="few">Выдалена %1$d падзеі</item>
+        <item quantity="many">Выдалена %1$d падзей</item>
+        <item quantity="other">Выдалена %1$d падзеі</item>
+    </plurals>
+    <plurals name="calendar_event_delete_status_failed_count">
+        <item quantity="one">Не ўдалося выдаліць %1$d падзею</item>
+        <item quantity="few">Не ўдалося выдаліць %1$d падзеі</item>
+        <item quantity="many">Не ўдалося выдаліць %1$d падзей</item>
+        <item quantity="other">Не ўдалося выдаліць %1$d падзеі</item>
+    </plurals>
+    <plurals name="calendar_event_update_status_failed_count">
+        <item quantity="one">Не ўдалося абнавіць %1$d падзею</item>
+        <item quantity="few">Не ўдалося абнавіць %1$d падзеі</item>
+        <item quantity="many">Не ўдалося абнавіць %1$d падзей</item>
+        <item quantity="other">Не ўдалося абнавіць %1$d падзеі</item>
+    </plurals>
+    <plurals name="calendar_event_update_status_updated">
+        <item quantity="one">Абноўлена %1$d падзея</item>
+        <item quantity="few">Абноўлена %1$d падзеі</item>
+        <item quantity="many">Абноўлена %1$d падзей</item>
+        <item quantity="other">Абноўлена %1$d падзеі</item>
+    </plurals>
+    <plurals name="calendar_events_status_found">
+        <item quantity="one">Знойдзена %1$d падзея</item>
+        <item quantity="few">Знойдзена %1$d падзеі</item>
+        <item quantity="many">Знойдзена %1$d падзей</item>
+        <item quantity="other">Знойдзена %1$d падзеі</item>
+    </plurals>
+    <plurals name="calendar_list_status_found">
+        <item quantity="one">Знойдзены %1$d каляндар</item>
+        <item quantity="few">Знойдзена %1$d календары</item>
+        <item quantity="many">Знойдзена %1$d календароў</item>
+        <item quantity="other">Знойдзена %1$d календара</item>
+    </plurals>
+    <plurals name="calendar_reminders_count">
+        <item quantity="one">%d напамін</item>
+        <item quantity="few">%d напаміны</item>
+        <item quantity="many">%d напамінаў</item>
+        <item quantity="other">%d напаміну</item>
+    </plurals>
+    <plurals name="calendar_updating_events">
+        <item quantity="one">Абнавіць %d падзею</item>
+        <item quantity="few">Абнавіць %d падзеі</item>
+        <item quantity="many">Абнавіць %d падзей</item>
+        <item quantity="other">Абнавіць %d падзеі</item>
+    </plurals>
+    <plurals name="calendars_selected_count">
+        <item quantity="one">Выбраны %d каляндар</item>
+        <item quantity="few">Выбрана %d календары</item>
+        <item quantity="many">Выбрана %d календароў</item>
+        <item quantity="other">Выбрана %d календара</item>
+    </plurals>
+    <plurals name="capabilities_enabled_count">
+        <item quantity="one">Уключана: %1$d</item>
+        <item quantity="few">Уключана: %1$d</item>
+        <item quantity="many">Уключана: %1$d</item>
+        <item quantity="other">Уключана: %1$d</item>
+    </plurals>
+    <plurals name="ccr_agent_totals_tool_calls">
+        <item quantity="one">%1$d выклік інструмента</item>
+        <item quantity="few">%1$d выклікі інструментаў</item>
+        <item quantity="many">%1$d выклікаў інструментаў</item>
+        <item quantity="other">%1$d выкліку інструментаў</item>
+    </plurals>
+    <plurals name="ccr_auto_mode_blocked_more">
+        <item quantity="one">+ яшчэ %1$d заблакіраванае дзеянне</item>
+        <item quantity="few">+ яшчэ %1$d заблакіраваныя дзеянні</item>
+        <item quantity="many">+ яшчэ %1$d заблакіраваных дзеянняў</item>
+        <item quantity="other">+ яшчэ %1$d заблакіраванага дзеяння</item>
+    </plurals>
+    <plurals name="ccr_background_task_tool_uses">
+        <item quantity="one">%1$d выкарыстанне інструмента</item>
+        <item quantity="few">%1$d выкарыстанні інструментаў</item>
+        <item quantity="many">%1$d выкарыстанняў інструментаў</item>
+        <item quantity="other">%1$d выкарыстання інструментаў</item>
+    </plurals>
+    <plurals name="ccr_context_compacted_from_tokens">
+        <item quantity="one">Размова сціснута · было %1$s токен</item>
+        <item quantity="few">Размова сціснута · было %1$s токены</item>
+        <item quantity="many">Размова сціснута · было %1$s токенаў</item>
+        <item quantity="other">Размова сціснута · было %1$s токена</item>
+    </plurals>
+    <plurals name="ccr_context_compacted_saved_tokens">
+        <item quantity="one">Размова сціснута · зэканомлены %1$s токен</item>
+        <item quantity="few">Размова сціснута · зэканомлена %1$s токены</item>
+        <item quantity="many">Размова сціснута · зэканомлена %1$s токенаў</item>
+        <item quantity="other">Размова сціснута · зэканомлена %1$s токена</item>
+    </plurals>
+    <plurals name="ccr_context_show_more">
+        <item quantity="one">Паказаць яшчэ %d</item>
+        <item quantity="few">Паказаць яшчэ %d</item>
+        <item quantity="many">Паказаць яшчэ %d</item>
+        <item quantity="other">Паказаць яшчэ %d</item>
+    </plurals>
+    <plurals name="ccr_continue_on_cloud_branch_stale_commits">
+        <item quantity="one">%1$d неадпраўлены каміт застанецца на вашым камп’ютары.</item>
+        <item quantity="few">%1$d неадпраўленыя каміты застануцца на вашым камп’ютары.</item>
+        <item quantity="many">%1$d неадпраўленых камітаў застануцца на вашым камп’ютары.</item>
+        <item quantity="other">%1$d неадпраўленага каміта застануцца на вашым камп’ютары.</item>
+    </plurals>
+    <plurals name="ccr_continue_on_cloud_branch_stale_commits_dirty">
+        <item quantity="one">%1$d неадпраўлены каміт і незафіксаваныя змены застануцца на вашым камп’ютары.</item>
+        <item quantity="few">%1$d неадпраўленыя каміты і незафіксаваныя змены застануцца на вашым камп’ютары.</item>
+        <item quantity="many">%1$d неадпраўленых камітаў і незафіксаваныя змены застануцца на вашым камп’ютары.</item>
+        <item quantity="other">%1$d неадпраўленага каміта і незафіксаваныя змены застануцца на вашым камп’ютары.</item>
+    </plurals>
+    <plurals name="ccr_continue_on_cloud_branch_stale_commits_dirty_mid_operation">
+        <item quantity="one">%1$d неадпраўлены каміт і незафіксаваныя змены, а таксама незавершаная аперацыя git застануцца на вашым камп’ютары.</item>
+        <item quantity="few">%1$d неадпраўленыя каміты і незафіксаваныя змены, а таксама незавершаная аперацыя git застануцца на вашым камп’ютары.</item>
+        <item quantity="many">%1$d неадпраўленых камітаў і незафіксаваныя змены, а таксама незавершаная аперацыя git застануцца на вашым камп’ютары.</item>
+        <item quantity="other">%1$d неадпраўленага каміта і незафіксаваныя змены, а таксама незавершаная аперацыя git застануцца на вашым камп’ютары.</item>
+    </plurals>
+    <plurals name="ccr_continue_on_cloud_branch_stale_commits_mid_operation">
+        <item quantity="one">%1$d неадпраўлены каміт, а таксама незавершаная аперацыя git застануцца на вашым камп’ютары.</item>
+        <item quantity="few">%1$d неадпраўленыя каміты, а таксама незавершаная аперацыя git застануцца на вашым камп’ютары.</item>
+        <item quantity="many">%1$d неадпраўленых камітаў, а таксама незавершаная аперацыя git застануцца на вашым камп’ютары.</item>
+        <item quantity="other">%1$d неадпраўленага каміта, а таксама незавершаная аперацыя git застануцца на вашым камп’ютары.</item>
+    </plurals>
+    <plurals name="ccr_device_active_sessions_header">
+        <item quantity="one">%1$d актыўны сеанс</item>
+        <item quantity="few">%1$d актыўныя сеансы</item>
+        <item quantity="many">%1$d актыўных сеансаў</item>
+        <item quantity="other">%1$d актыўнага сеанса</item>
+    </plurals>
+    <plurals name="ccr_folder_access_allow">
+        <item quantity="one">Дадаць папку</item>
+        <item quantity="few">Дадаць папкі</item>
+        <item quantity="many">Дадаць папкі</item>
+        <item quantity="other">Дадаць папкі</item>
+    </plurals>
+    <plurals name="ccr_github_sso_hidden_repos_footer_count">
+        <item quantity="one">Рэпазіторыі з %1$d арганізацыі схаваны</item>
+        <item quantity="few">Рэпазіторыі з %1$d арганізацый схаваны</item>
+        <item quantity="many">Рэпазіторыі з %1$d арганізацый схаваны</item>
+        <item quantity="other">Рэпазіторыі з %1$d арганізацыі схаваны</item>
+    </plurals>
+    <plurals name="ccr_init_clone_doing">
+        <item quantity="one">Кланаванне %1$d рэпазіторыя</item>
+        <item quantity="few">Кланаванне %1$d рэпазіторыяў</item>
+        <item quantity="many">Кланаванне %1$d рэпазіторыяў</item>
+        <item quantity="other">Кланаванне %1$d рэпазіторыя</item>
+    </plurals>
+    <plurals name="ccr_init_clone_done">
+        <item quantity="one">Кланаваны %1$d рэпазіторый</item>
+        <item quantity="few">Кланавана %1$d рэпазіторыі</item>
+        <item quantity="many">Кланавана %1$d рэпазіторыяў</item>
+        <item quantity="other">Кланавана %1$d рэпазіторыя</item>
+    </plurals>
+    <plurals name="ccr_init_clone_resume_doing">
+        <item quantity="one">Абнаўленне %1$d рэпазіторыя</item>
+        <item quantity="few">Абнаўленне %1$d рэпазіторыяў</item>
+        <item quantity="many">Абнаўленне %1$d рэпазіторыяў</item>
+        <item quantity="other">Абнаўленне %1$d рэпазіторыя</item>
+    </plurals>
+    <plurals name="ccr_init_clone_resume_done">
+        <item quantity="one">Абноўлены %1$d рэпазіторый</item>
+        <item quantity="few">Абноўлена %1$d рэпазіторыі</item>
+        <item quantity="many">Абноўлена %1$d рэпазіторыяў</item>
+        <item quantity="other">Абноўлена %1$d рэпазіторыя</item>
+    </plurals>
+    <plurals name="ccr_init_clone_resume_todo">
+        <item quantity="one">Абнавіць %1$d рэпазіторый</item>
+        <item quantity="few">Абнавіць %1$d рэпазіторыі</item>
+        <item quantity="many">Абнавіць %1$d рэпазіторыяў</item>
+        <item quantity="other">Абнавіць %1$d рэпазіторыя</item>
+    </plurals>
+    <plurals name="ccr_init_clone_todo">
+        <item quantity="one">Кланаваць %1$d рэпазіторый</item>
+        <item quantity="few">Кланаваць %1$d рэпазіторыі</item>
+        <item quantity="many">Кланаваць %1$d рэпазіторыяў</item>
+        <item quantity="other">Кланаваць %1$d рэпазіторыя</item>
+    </plurals>
+    <plurals name="ccr_init_runner_retry_after_attempts">
+        <item quantity="one">Не ўдалося пасля %1$d спробы. Адпраўце новае паведамленне, каб паўтарыць.</item>
+        <item quantity="few">Не ўдалося пасля %1$d спроб. Адпраўце новае паведамленне, каб паўтарыць.</item>
+        <item quantity="many">Не ўдалося пасля %1$d спроб. Адпраўце новае паведамленне, каб паўтарыць.</item>
+        <item quantity="other">Не ўдалося пасля %1$d спробы. Адпраўце новае паведамленне, каб паўтарыць.</item>
+    </plurals>
+    <plurals name="ccr_overview_landing_new_threads">
+        <item quantity="one">%1$d новы трэд</item>
+        <item quantity="few">%1$d новыя трэды</item>
+        <item quantity="many">%1$d новых трэдаў</item>
+        <item quantity="other">%1$d новага трэда</item>
+    </plurals>
+    <plurals name="ccr_overview_library_item_count">
+        <item quantity="one">%1$d элемент</item>
+        <item quantity="few">%1$d элементы</item>
+        <item quantity="many">%1$d элементаў</item>
+        <item quantity="other">%1$d элемента</item>
+    </plurals>
+    <plurals name="ccr_overview_library_upload_adding_count">
+        <item quantity="one">Дадаванне %1$d файла…</item>
+        <item quantity="few">Дадаванне %1$d файлаў…</item>
+        <item quantity="many">Дадаванне %1$d файлаў…</item>
+        <item quantity="other">Дадаванне %1$d файла…</item>
+    </plurals>
+    <plurals name="ccr_overview_library_upload_file_count">
+        <item quantity="one">%1$d файл</item>
+        <item quantity="few">%1$d файлы</item>
+        <item quantity="many">%1$d файлаў</item>
+        <item quantity="other">%1$d файла</item>
+    </plurals>
+    <plurals name="ccr_overview_library_upload_unreadable_count">
+        <item quantity="one">%1$d нечытэльны файл</item>
+        <item quantity="few">%1$d нечытэльныя файлы</item>
+        <item quantity="many">%1$d нечытэльных файлаў</item>
+        <item quantity="other">%1$d нечытэльнага файла</item>
+    </plurals>
+    <plurals name="ccr_overview_thread_participants">
+        <item quantity="one">%1$d удзельнік</item>
+        <item quantity="few">%1$d удзельнікі</item>
+        <item quantity="many">%1$d удзельнікаў</item>
+        <item quantity="other">%1$d удзельніка</item>
+    </plurals>
+    <plurals name="ccr_paired_session_count_badge">
+        <item quantity="one">%1$d сеанс</item>
+        <item quantity="few">%1$d сеансы</item>
+        <item quantity="many">%1$d сеансаў</item>
+        <item quantity="other">%1$d сеанса</item>
+    </plurals>
+    <plurals name="ccr_pr_detail_checks_more_on_github">
+        <item quantity="one">Яшчэ %1$d на GitHub</item>
+        <item quantity="few">Яшчэ %1$d на GitHub</item>
+        <item quantity="many">Яшчэ %1$d на GitHub</item>
+        <item quantity="other">Яшчэ %1$d на GitHub</item>
+    </plurals>
+    <plurals name="ccr_pr_detail_checks_running">
+        <item quantity="one">Выконваецца: %1$d</item>
+        <item quantity="few">Выконваецца: %1$d</item>
+        <item quantity="many">Выконваецца: %1$d</item>
+        <item quantity="other">Выконваецца: %1$d</item>
+    </plurals>
+    <plurals name="ccr_pr_detail_files_changed">
+        <item quantity="one">Зменены %1$d файл</item>
+        <item quantity="few">Зменена %1$d файлы</item>
+        <item quantity="many">Зменена %1$d файлаў</item>
+        <item quantity="other">Зменена %1$d файла</item>
+    </plurals>
+    <plurals name="ccr_pr_detail_reviewers_and_more">
+        <item quantity="one">%1$s і яшчэ %2$d</item>
+        <item quantity="few">%1$s і яшчэ %2$d</item>
+        <item quantity="many">%1$s і яшчэ %2$d</item>
+        <item quantity="other">%1$s і яшчэ %2$d</item>
+    </plurals>
+    <plurals name="ccr_received_ci_events">
+        <item quantity="one">Атрымана %1$d падзея CI</item>
+        <item quantity="few">Атрымана %1$d падзеі CI</item>
+        <item quantity="many">Атрымана %1$d падзей CI</item>
+        <item quantity="other">Атрымана %1$d падзеі CI</item>
+    </plurals>
+    <plurals name="ccr_received_github_events">
+        <item quantity="one">Атрымана %1$d падзея GitHub</item>
+        <item quantity="few">Атрымана %1$d падзеі GitHub</item>
+        <item quantity="many">Атрымана %1$d падзей GitHub</item>
+        <item quantity="other">Атрымана %1$d падзеі GitHub</item>
+    </plurals>
+    <plurals name="ccr_repo_extra_count">
+        <item quantity="one">+%d</item>
+        <item quantity="few">+%d</item>
+        <item quantity="many">+%d</item>
+        <item quantity="other">+%d</item>
+    </plurals>
+    <plurals name="ccr_repo_subtitle_multi">
+        <item quantity="one">%1$s і яшчэ %2$d</item>
+        <item quantity="few">%1$s і яшчэ %2$d</item>
+        <item quantity="many">%1$s і яшчэ %2$d</item>
+        <item quantity="other">%1$s і яшчэ %2$d</item>
+    </plurals>
+    <plurals name="ccr_report_findings_count">
+        <item quantity="one">%1$d знаходка</item>
+        <item quantity="few">%1$d знаходкі</item>
+        <item quantity="many">%1$d знаходак</item>
+        <item quantity="other">%1$d знаходкі</item>
+    </plurals>
+    <plurals name="ccr_self_hosted_runners_online">
+        <item quantity="one">%1$d раннер у сетцы</item>
+        <item quantity="few">%1$d раннеры ў сетцы</item>
+        <item quantity="many">%1$d раннераў у сетцы</item>
+        <item quantity="other">%1$d раннера ў сетцы</item>
+    </plurals>
+    <plurals name="ccr_setup_card_start_threads">
+        <item quantity="one">Пачаць %d трэд</item>
+        <item quantity="few">Пачаць %d трэды</item>
+        <item quantity="many">Пачаць %d трэдаў</item>
+        <item quantity="other">Пачаць %d трэда</item>
+    </plurals>
+    <plurals name="ccr_sheet_n_branches">
+        <item quantity="one">%d галіна</item>
+        <item quantity="few">%d галіны</item>
+        <item quantity="many">%d галін</item>
+        <item quantity="other">%d галіны</item>
+    </plurals>
+    <plurals name="ccr_sheet_n_repos">
+        <item quantity="one">%d рэпазіторый</item>
+        <item quantity="few">%d рэпазіторыі</item>
+        <item quantity="many">%d рэпазіторыяў</item>
+        <item quantity="other">%d рэпазіторыя</item>
+    </plurals>
+    <plurals name="ccr_summary_agent_described_more">
+        <item quantity="one">Запушчаны агент: %1$s (+%2$d інструмент)</item>
+        <item quantity="few">Запушчаны агент: %1$s (+%2$d інструменты)</item>
+        <item quantity="many">Запушчаны агент: %1$s (+%2$d інструментаў)</item>
+        <item quantity="other">Запушчаны агент: %1$s (+%2$d інструмента)</item>
+    </plurals>
+    <plurals name="ccr_summary_bash">
+        <item quantity="one">&lt;annotation role=\"verb\">Выканана&lt;/annotation> ^1 каманда</item>
+        <item quantity="few">&lt;annotation role=\"verb\">Выкананы&lt;/annotation> ^1 каманды</item>
+        <item quantity="many">&lt;annotation role=\"verb\">Выканана&lt;/annotation> ^1 каманд</item>
+        <item quantity="other">&lt;annotation role=\"verb\">Выканана&lt;/annotation> ^1 каманды</item>
+    </plurals>
+    <plurals name="ccr_summary_edit">
+        <item quantity="one">&lt;annotation role=\"verb\">Зменены&lt;/annotation> ^1 файл</item>
+        <item quantity="few">&lt;annotation role=\"verb\">Зменены&lt;/annotation> ^1 файлы</item>
+        <item quantity="many">&lt;annotation role=\"verb\">Зменена&lt;/annotation> ^1 файлаў</item>
+        <item quantity="other">&lt;annotation role=\"verb\">Зменена&lt;/annotation> ^1 файла</item>
+    </plurals>
+    <plurals name="ccr_summary_glob">
+        <item quantity="one">&lt;annotation role=\"verb\">Знойдзены&lt;/annotation> файлы</item>
+        <item quantity="few">&lt;annotation role=\"verb\">Знойдзены&lt;/annotation> файлы</item>
+        <item quantity="many">&lt;annotation role=\"verb\">Знойдзены&lt;/annotation> файлы</item>
+        <item quantity="other">&lt;annotation role=\"verb\">Знойдзены&lt;/annotation> файлы</item>
+    </plurals>
+    <plurals name="ccr_summary_grep">
+        <item quantity="one">&lt;annotation role=\"verb\">Выкананы пошук&lt;/annotation> па кодзе</item>
+        <item quantity="few">&lt;annotation role=\"verb\">Выкананы пошук&lt;/annotation> па кодзе</item>
+        <item quantity="many">&lt;annotation role=\"verb\">Выкананы пошук&lt;/annotation> па кодзе</item>
+        <item quantity="other">&lt;annotation role=\"verb\">Выкананы пошук&lt;/annotation> па кодзе</item>
+    </plurals>
+    <plurals name="ccr_summary_notebook_edit">
+        <item quantity="one">&lt;annotation role=\"verb\">Зменены&lt;/annotation> ^1 блакнот</item>
+        <item quantity="few">&lt;annotation role=\"verb\">Зменены&lt;/annotation> ^1 блакноты</item>
+        <item quantity="many">&lt;annotation role=\"verb\">Зменена&lt;/annotation> ^1 блакнотаў</item>
+        <item quantity="other">&lt;annotation role=\"verb\">Зменена&lt;/annotation> ^1 блакнота</item>
+    </plurals>
+    <plurals name="ccr_summary_other">
+        <item quantity="one">&lt;annotation role=\"verb\">Выкарыстаны&lt;/annotation> ^1 інструмент</item>
+        <item quantity="few">&lt;annotation role=\"verb\">Выкарыстаны&lt;/annotation> ^1 інструменты</item>
+        <item quantity="many">&lt;annotation role=\"verb\">Выкарыстана&lt;/annotation> ^1 інструментаў</item>
+        <item quantity="other">&lt;annotation role=\"verb\">Выкарыстана&lt;/annotation> ^1 інструмента</item>
+    </plurals>
+    <plurals name="ccr_summary_proposed_plan">
+        <item quantity="one">&lt;annotation role=\"verb\">Прапанаваны&lt;/annotation> план</item>
+        <item quantity="few">&lt;annotation role=\"verb\">Прапанаваны&lt;/annotation> план</item>
+        <item quantity="many">&lt;annotation role=\"verb\">Прапанаваны&lt;/annotation> план</item>
+        <item quantity="other">&lt;annotation role=\"verb\">Прапанаваны&lt;/annotation> план</item>
+    </plurals>
+    <plurals name="ccr_summary_read">
+        <item quantity="one">&lt;annotation role=\"verb\">Прачытаны&lt;/annotation> ^1 файл</item>
+        <item quantity="few">&lt;annotation role=\"verb\">Прачытаны&lt;/annotation> ^1 файлы</item>
+        <item quantity="many">&lt;annotation role=\"verb\">Прачытана&lt;/annotation> ^1 файлаў</item>
+        <item quantity="other">&lt;annotation role=\"verb\">Прачытана&lt;/annotation> ^1 файла</item>
+    </plurals>
+    <plurals name="ccr_summary_task">
+        <item quantity="one">&lt;annotation role=\"verb\">Запушчаны&lt;/annotation> ^1 агент</item>
+        <item quantity="few">&lt;annotation role=\"verb\">Запушчаны&lt;/annotation> ^1 агенты</item>
+        <item quantity="many">&lt;annotation role=\"verb\">Запушчана&lt;/annotation> ^1 агентаў</item>
+        <item quantity="other">&lt;annotation role=\"verb\">Запушчана&lt;/annotation> ^1 агента</item>
+    </plurals>
+    <plurals name="ccr_summary_todo">
+        <item quantity="one">&lt;annotation role=\"verb\">Абноўлены&lt;/annotation> задачы</item>
+        <item quantity="few">&lt;annotation role=\"verb\">Абноўлены&lt;/annotation> задачы</item>
+        <item quantity="many">&lt;annotation role=\"verb\">Абноўлены&lt;/annotation> задачы</item>
+        <item quantity="other">&lt;annotation role=\"verb\">Абноўлены&lt;/annotation> задачы</item>
+    </plurals>
+    <plurals name="ccr_summary_web">
+        <item quantity="one">&lt;annotation role=\"verb\">Прагледжаны&lt;/annotation> вэб-старонкі</item>
+        <item quantity="few">&lt;annotation role=\"verb\">Прагледжаны&lt;/annotation> вэб-старонкі</item>
+        <item quantity="many">&lt;annotation role=\"verb\">Прагледжаны&lt;/annotation> вэб-старонкі</item>
+        <item quantity="other">&lt;annotation role=\"verb\">Прагледжаны&lt;/annotation> вэб-старонкі</item>
+    </plurals>
+    <plurals name="ccr_summary_with_failed">
+        <item quantity="one">%1$s (памылак: %2$d)</item>
+        <item quantity="few">%1$s (памылак: %2$d)</item>
+        <item quantity="many">%1$s (памылак: %2$d)</item>
+        <item quantity="other">%1$s (памылак: %2$d)</item>
+    </plurals>
+    <plurals name="ccr_summary_write">
+        <item quantity="one">&lt;annotation role=\"verb\">Створаны&lt;/annotation> ^1 файл</item>
+        <item quantity="few">&lt;annotation role=\"verb\">Створаны&lt;/annotation> ^1 файлы</item>
+        <item quantity="many">&lt;annotation role=\"verb\">Створана&lt;/annotation> ^1 файлаў</item>
+        <item quantity="other">&lt;annotation role=\"verb\">Створана&lt;/annotation> ^1 файла</item>
+    </plurals>
+    <plurals name="ccr_thinking_token_count">
+        <item quantity="one">%1$s токен</item>
+        <item quantity="few">%1$s токены</item>
+        <item quantity="many">%1$s токенаў</item>
+        <item quantity="other">%1$s токена</item>
+    </plurals>
+    <plurals name="ccr_thread_card_more_outputs_a11y">
+        <item quantity="one">Яшчэ %1$d вынік</item>
+        <item quantity="few">Яшчэ %1$d вынікі</item>
+        <item quantity="many">Яшчэ %1$d вынікаў</item>
+        <item quantity="other">Яшчэ %1$d выніку</item>
+    </plurals>
+    <plurals name="ccr_thread_card_outputs_a11y">
+        <item quantity="one">%1$d вынік</item>
+        <item quantity="few">%1$d вынікі</item>
+        <item quantity="many">%1$d вынікаў</item>
+        <item quantity="other">%1$d выніку</item>
+    </plurals>
+    <plurals name="ccr_thread_card_steps_a11y">
+        <item quantity="one">Крокаў выканана: %1$d з %2$d</item>
+        <item quantity="few">Крокаў выканана: %1$d з %2$d</item>
+        <item quantity="many">Крокаў выканана: %1$d з %2$d</item>
+        <item quantity="other">Крокаў выканана: %1$d з %2$d</item>
+    </plurals>
+    <plurals name="ccr_thread_delete_routines">
+        <item quantity="one">Таксама будзе завершана %1$d руціна, створаная ў гэтым трэдзе.</item>
+        <item quantity="few">Таксама будуць завершаны %1$d руціны, створаныя ў гэтым трэдзе.</item>
+        <item quantity="many">Таксама будуць завершаны %1$d руцін, створаных у гэтым трэдзе.</item>
+        <item quantity="other">Таксама будуць завершаны руціны, створаныя ў гэтым трэдзе (%1$d).</item>
+    </plurals>
+    <plurals name="ccr_thread_header_artifacts">
+        <item quantity="one">%1$d артэфакт</item>
+        <item quantity="few">%1$d артэфакты</item>
+        <item quantity="many">%1$d артэфактаў</item>
+        <item quantity="other">%1$d артэфакта</item>
+    </plurals>
+    <plurals name="ccr_thread_header_outputs">
+        <item quantity="one">%1$d вынік</item>
+        <item quantity="few">%1$d вынікі</item>
+        <item quantity="many">%1$d вынікаў</item>
+        <item quantity="other">%1$d выніку</item>
+    </plurals>
+    <plurals name="ccr_thread_header_pull_requests">
+        <item quantity="one">%1$d пул-рэквест</item>
+        <item quantity="few">%1$d пул-рэквесты</item>
+        <item quantity="many">%1$d пул-рэквестаў</item>
+        <item quantity="other">%1$d пул-рэквеста</item>
+    </plurals>
+    <plurals name="ccr_thread_todos_spoken_count">
+        <item quantity="one">Задач выканана: %1$d з %2$d</item>
+        <item quantity="few">Задач выканана: %1$d з %2$d</item>
+        <item quantity="many">Задач выканана: %1$d з %2$d</item>
+        <item quantity="other">Задач выканана: %1$d з %2$d</item>
+    </plurals>
+    <plurals name="ccr_timeline_reaction_chip_description">
+        <item quantity="one">%1$d рэакцыя %2$s</item>
+        <item quantity="few">%1$d рэакцыі %2$s</item>
+        <item quantity="many">%1$d рэакцый %2$s</item>
+        <item quantity="other">%1$d рэакцыі %2$s</item>
+    </plurals>
+    <plurals name="ccr_timeline_reactors_others">
+        <item quantity="one">яшчэ %1$d чалавек</item>
+        <item quantity="few">яшчэ %1$d чалавекі</item>
+        <item quantity="many">яшчэ %1$d чалавек</item>
+        <item quantity="other">яшчэ %1$d чалавека</item>
+    </plurals>
+    <plurals name="ccr_timeline_reactors_others_row">
+        <item quantity="one">яшчэ %1$d чалавек</item>
+        <item quantity="few">яшчэ %1$d чалавекі</item>
+        <item quantity="many">яшчэ %1$d чалавек</item>
+        <item quantity="other">яшчэ %1$d чалавека</item>
+    </plurals>
+    <plurals name="ccr_timeline_reactors_people">
+        <item quantity="one">%1$d чалавек</item>
+        <item quantity="few">%1$d чалавекі</item>
+        <item quantity="many">%1$d чалавек</item>
+        <item quantity="other">%1$d чалавека</item>
+    </plurals>
+    <plurals name="ccr_timeline_reactors_row_description">
+        <item quantity="one">%1$s, %2$d рэакцыя</item>
+        <item quantity="few">%1$s, %2$d рэакцыі</item>
+        <item quantity="many">%1$s, %2$d рэакцый</item>
+        <item quantity="other">%1$s, %2$d рэакцыі</item>
+    </plurals>
+    <plurals name="ccr_timeline_reactors_row_description_with_names">
+        <item quantity="one">%1$s, %2$d рэакцыя: %3$s</item>
+        <item quantity="few">%1$s, %2$d рэакцыі: %3$s</item>
+        <item quantity="many">%1$s, %2$d рэакцый: %3$s</item>
+        <item quantity="other">%1$s, %2$d рэакцыі: %3$s</item>
+    </plurals>
+    <plurals name="ccr_timeline_reactors_tab_all_description">
+        <item quantity="one">Усе, %1$d рэакцыя</item>
+        <item quantity="few">Усе, %1$d рэакцыі</item>
+        <item quantity="many">Усе, %1$d рэакцый</item>
+        <item quantity="other">Усе, %1$d рэакцыі</item>
+    </plurals>
+    <plurals name="ccr_tool_approval_browser_request_count">
+        <item quantity="one">(%d запыт)</item>
+        <item quantity="few">(%d запыты)</item>
+        <item quantity="many">(%d запытаў)</item>
+        <item quantity="other">(%d запыту)</item>
+    </plurals>
+    <plurals name="ccr_tool_approval_raw_args_overflow">
+        <item quantity="one">+ яшчэ %1$d аргумент</item>
+        <item quantity="few">+ яшчэ %1$d аргументы</item>
+        <item quantity="many">+ яшчэ %1$d аргументаў</item>
+        <item quantity="other">+ яшчэ %1$d аргумента</item>
+    </plurals>
+    <plurals name="ccr_tool_approval_raw_value_truncated">
+        <item quantity="one">… +%1$d сімвал не паказаны</item>
+        <item quantity="few">… +%1$d сімвалы не паказаны</item>
+        <item quantity="many">… +%1$d сімвалаў не паказана</item>
+        <item quantity="other">… +%1$d сімвала не паказана</item>
+    </plurals>
+    <plurals name="ccr_turn_edits_show_more">
+        <item quantity="one">Паказаць яшчэ %d</item>
+        <item quantity="few">Паказаць яшчэ %d</item>
+        <item quantity="many">Паказаць яшчэ %d</item>
+        <item quantity="other">Паказаць яшчэ %d</item>
+    </plurals>
+    <plurals name="ccr_upgraded_welcome_files">
+        <item quantity="one">%1$d файл праекта</item>
+        <item quantity="few">%1$d файлы праекта</item>
+        <item quantity="many">%1$d файлаў праекта</item>
+        <item quantity="other">%1$d файла праекта</item>
+    </plurals>
+    <plurals name="ccr_upgraded_welcome_pick_up_line">
+        <item quantity="one">Я буду сачыць за працай тут, рухаць яе наперад і паведамляць пра ўсё важнае. Для пачатку вось %1$d чат, які можна працягнуць.</item>
+        <item quantity="few">Я буду сачыць за працай тут, рухаць яе наперад і паведамляць пра ўсё важнае. Для пачатку вось %1$d чаты, якія можна працягнуць.</item>
+        <item quantity="many">Я буду сачыць за працай тут, рухаць яе наперад і паведамляць пра ўсё важнае. Для пачатку вось %1$d чатаў, якія можна працягнуць.</item>
+        <item quantity="other">Я буду сачыць за працай тут, рухаць яе наперад і паведамляць пра ўсё важнае. Для пачатку вось %1$d чата, якія можна працягнуць.</item>
+    </plurals>
+    <plurals name="ccr_upgraded_welcome_threads">
+        <item quantity="one">%1$d %2$s трэд</item>
+        <item quantity="few">%1$d %2$s трэды</item>
+        <item quantity="many">%1$d %2$s трэдаў</item>
+        <item quantity="other">%1$d %2$s трэда</item>
+    </plurals>
+    <plurals name="ccr_upgraded_welcome_threads_old_word">
+        <item quantity="one">чат</item>
+        <item quantity="few">чаты</item>
+        <item quantity="many">чатаў</item>
+        <item quantity="other">чата</item>
+    </plurals>
+    <plurals name="ccr_upgraded_welcome_threads_spoken">
+        <item quantity="one">%1$d трэд, раней называўся чатам</item>
+        <item quantity="few">%1$d трэды, раней называліся чатамі</item>
+        <item quantity="many">%1$d трэдаў, раней называліся чатамі</item>
+        <item quantity="other">%1$d трэда, раней называліся чатамі</item>
+    </plurals>
+    <plurals name="ccr_workflow_card_agents">
+        <item quantity="one">%1$d агент</item>
+        <item quantity="few">%1$d агенты</item>
+        <item quantity="many">%1$d агентаў</item>
+        <item quantity="other">%1$d агента</item>
+    </plurals>
+    <plurals name="ccr_workflow_running_tasks">
+        <item quantity="one">%1$d задача выконваецца</item>
+        <item quantity="few">%1$d задачы выконваюцца</item>
+        <item quantity="many">%1$d задач выконваецца</item>
+        <item quantity="other">%1$d задачы выконваецца</item>
+    </plurals>
+    <plurals name="cds_diff_indicator_lines_added">
+        <item quantity="one">Дададзены %1$d радок</item>
+        <item quantity="few">Дададзена %1$d радкі</item>
+        <item quantity="many">Дададзена %1$d радкоў</item>
+        <item quantity="other">Дададзена %1$d радка</item>
+    </plurals>
+    <plurals name="cds_diff_indicator_lines_removed">
+        <item quantity="one">Выдалены %1$d радок</item>
+        <item quantity="few">Выдалена %1$d радкі</item>
+        <item quantity="many">Выдалена %1$d радкоў</item>
+        <item quantity="other">Выдалена %1$d радка</item>
+    </plurals>
+    <plurals name="cds_field_resize_grip_rows">
+        <item quantity="one">%1$d радок</item>
+        <item quantity="few">%1$d радкі</item>
+        <item quantity="many">%1$d радкоў</item>
+        <item quantity="other">%1$d радка</item>
+    </plurals>
+    <plurals name="chart_a11y_series">
+        <item quantity="one">%1$d шэраг даных</item>
+        <item quantity="few">%1$d шэрагі даных</item>
+        <item quantity="many">%1$d шэрагаў даных</item>
+        <item quantity="other">%1$d шэрагу даных</item>
+    </plurals>
+    <plurals name="chat_agent_question_hide">
+        <item quantity="one">Схаваць пытанне</item>
+        <item quantity="few">Схаваць пытанні</item>
+        <item quantity="many">Схаваць пытанні</item>
+        <item quantity="other">Схаваць пытанні</item>
+    </plurals>
+    <plurals name="chat_agent_question_show">
+        <item quantity="one">Паказаць пытанне</item>
+        <item quantity="few">Паказаць пытанні</item>
+        <item quantity="many">Паказаць пытанні</item>
+        <item quantity="other">Паказаць пытанні</item>
+    </plurals>
+    <plurals name="chat_input_hidden_attachments_a11y">
+        <item quantity="one">%1$d укладанне</item>
+        <item quantity="few">%1$d укладанні</item>
+        <item quantity="many">%1$d укладанняў</item>
+        <item quantity="other">%1$d укладання</item>
+    </plurals>
+    <plurals name="chat_list_delete_selected_partial_failure">
+        <item quantity="one">Не ўдалося выдаліць %1$d чат</item>
+        <item quantity="few">Не ўдалося выдаліць %1$d чаты</item>
+        <item quantity="many">Не ўдалося выдаліць %1$d чатаў</item>
+        <item quantity="other">Не ўдалося выдаліць %1$d чата</item>
+    </plurals>
+    <plurals name="chat_list_delete_selected_title">
+        <item quantity="one">Выдаліць %1$d чат?</item>
+        <item quantity="few">Выдаліць %1$d чаты?</item>
+        <item quantity="many">Выдаліць %1$d чатаў?</item>
+        <item quantity="other">Выдаліць %1$d чата?</item>
+    </plurals>
+    <plurals name="chat_message_sources_count">
+        <item quantity="one">%1$d крыніца</item>
+        <item quantity="few">%1$d крыніцы</item>
+        <item quantity="many">%1$d крыніц</item>
+        <item quantity="other">%1$d крыніцы</item>
+    </plurals>
+    <plurals name="chat_outputs_files_pill_view">
+        <item quantity="one">Адкрыць файл</item>
+        <item quantity="few">Адкрыць файлы</item>
+        <item quantity="many">Адкрыць файлы</item>
+        <item quantity="other">Адкрыць файлы</item>
+    </plurals>
+    <plurals name="chat_reply_file_edits_title">
+        <item quantity="one">Зменены %1$d файл</item>
+        <item quantity="few">Зменена %1$d файлы</item>
+        <item quantity="many">Зменена %1$d файлаў</item>
+        <item quantity="other">Зменена %1$d файла</item>
+    </plurals>
+    <plurals name="chat_waiting_messages_count">
+        <item quantity="one">У чаканні: %d</item>
+        <item quantity="few">У чаканні: %d</item>
+        <item quantity="many">У чаканні: %d</item>
+        <item quantity="other">У чаканні: %d</item>
+    </plurals>
+    <plurals name="chat_waiting_messages_sheet_title">
+        <item quantity="one">%d паведамленне ў чаканні</item>
+        <item quantity="few">%d паведамленні ў чаканні</item>
+        <item quantity="many">%d паведамленняў у чаканні</item>
+        <item quantity="other">%d паведамлення ў чаканні</item>
+    </plurals>
+    <plurals name="code_notifications_bell_unseen">
+        <item quantity="one">%1$d новае апавяшчэнне</item>
+        <item quantity="few">%1$d новыя апавяшчэнні</item>
+        <item quantity="many">%1$d новых апавяшчэнняў</item>
+        <item quantity="other">%1$d новага апавяшчэння</item>
+    </plurals>
+    <plurals name="code_project_context_drive_selected_count">
+        <item quantity="one">Выбрана: %1$d</item>
+        <item quantity="few">Выбрана: %1$d</item>
+        <item quantity="many">Выбрана: %1$d</item>
+        <item quantity="other">Выбрана: %1$d</item>
+    </plurals>
+    <plurals name="code_project_create_goal_over_limit">
+        <item quantity="one">Ліміт у 2000 сімвалаў перавышаны на %1$d сімвал.</item>
+        <item quantity="few">Ліміт у 2000 сімвалаў перавышаны на %1$d сімвалы.</item>
+        <item quantity="many">Ліміт у 2000 сімвалаў перавышаны на %1$d сімвалаў.</item>
+        <item quantity="other">Ліміт у 2000 сімвалаў перавышаны на %1$d сімвала.</item>
+    </plurals>
+    <plurals name="code_project_goal_over_limit">
+        <item quantity="one">Ліміт у 2000 сімвалаў перавышаны на %1$d сімвал. Скараціце тэкст перад захаваннем.</item>
+        <item quantity="few">Ліміт у 2000 сімвалаў перавышаны на %1$d сімвалы. Скараціце тэкст перад захаваннем.</item>
+        <item quantity="many">Ліміт у 2000 сімвалаў перавышаны на %1$d сімвалаў. Скараціце тэкст перад захаваннем.</item>
+        <item quantity="other">Ліміт у 2000 сімвалаў перавышаны на %1$d сімвала. Скараціце тэкст перад захаваннем.</item>
+    </plurals>
+    <plurals name="code_project_member_count">
+        <item quantity="one">%1$d удзельнік</item>
+        <item quantity="few">%1$d удзельнікі</item>
+        <item quantity="many">%1$d удзельнікаў</item>
+        <item quantity="other">%1$d удзельніка</item>
+    </plurals>
+    <plurals name="code_project_member_count_truncated">
+        <item quantity="one">%1$d або больш удзельнікаў</item>
+        <item quantity="few">%1$d або больш удзельнікаў</item>
+        <item quantity="many">%1$d або больш удзельнікаў</item>
+        <item quantity="other">%1$d або больш удзельнікаў</item>
+    </plurals>
+    <plurals name="code_project_notifications_digest_times_count">
+        <item quantity="one">%1$d раз на дзень</item>
+        <item quantity="few">%1$d разы на дзень</item>
+        <item quantity="many">%1$d разоў на дзень</item>
+        <item quantity="other">%1$d раза на дзень</item>
+    </plurals>
+    <plurals name="code_project_notifications_summary_some_on">
+        <item quantity="one">Уключана: %1$d</item>
+        <item quantity="few">Уключана: %1$d</item>
+        <item quantity="many">Уключана: %1$d</item>
+        <item quantity="other">Уключана: %1$d</item>
+    </plurals>
+    <plurals name="code_project_repos_collapsed">
+        <item quantity="one">%1$s і яшчэ %2$d</item>
+        <item quantity="few">%1$s і яшчэ %2$d</item>
+        <item quantity="many">%1$s і яшчэ %2$d</item>
+        <item quantity="other">%1$s і яшчэ %2$d</item>
+    </plurals>
+    <plurals name="code_project_repos_refused_count_line">
+        <item quantity="one">У Claude няма доступу на GitHub да %1$d выбранага рэпазіторыя. %2$s</item>
+        <item quantity="few">У Claude няма доступу на GitHub да %1$d выбраных рэпазіторыяў. %2$s</item>
+        <item quantity="many">У Claude няма доступу на GitHub да %1$d выбраных рэпазіторыяў. %2$s</item>
+        <item quantity="other">У Claude няма доступу на GitHub да %1$d выбранага рэпазіторыя. %2$s</item>
+    </plurals>
+    <plurals name="code_project_usage_unlisted_footnote">
+        <item quantity="one">Яшчэ %1$d трэд не паказаны; ён улічаны ў выніках.</item>
+        <item quantity="few">Яшчэ %1$d трэды не паказаны; яны ўлічаны ў выніках.</item>
+        <item quantity="many">Яшчэ %1$d трэдаў не паказана; яны ўлічаны ў выніках.</item>
+        <item quantity="other">Яшчэ %1$d трэда не паказана; яны ўлічаны ў выніках.</item>
+    </plurals>
+    <plurals name="code_projects_view_more">
+        <item quantity="one">Паказаць яшчэ %1$d</item>
+        <item quantity="few">Паказаць яшчэ %1$d</item>
+        <item quantity="many">Паказаць яшчэ %1$d</item>
+        <item quantity="other">Паказаць яшчэ %1$d</item>
+    </plurals>
+    <plurals name="connected_apps_card_tools_count">
+        <item quantity="one">Уключана інструментаў: %1$d з %2$d</item>
+        <item quantity="few">Уключана інструментаў: %1$d з %2$d</item>
+        <item quantity="many">Уключана інструментаў: %1$d з %2$d</item>
+        <item quantity="other">Уключана інструментаў: %1$d з %2$d</item>
+    </plurals>
+    <plurals name="connected_apps_enabled_count">
+        <item quantity="one">Уключана: %1$d</item>
+        <item quantity="few">Уключана: %1$d</item>
+        <item quantity="many">Уключана: %1$d</item>
+        <item quantity="other">Уключана: %1$d</item>
+    </plurals>
+    <plurals name="connector_directory_show_more">
+        <item quantity="one">Яшчэ %1$d</item>
+        <item quantity="few">Яшчэ %1$d</item>
+        <item quantity="many">Яшчэ %1$d</item>
+        <item quantity="other">Яшчэ %1$d</item>
+    </plurals>
+    <plurals name="connectors_connected_count">
+        <item quantity="one">Падключана: %1$d</item>
+        <item quantity="few">Падключана: %1$d</item>
+        <item quantity="many">Падключана: %1$d</item>
+        <item quantity="other">Падключана: %1$d</item>
+    </plurals>
+    <plurals name="diff_comments_chip_text">
+        <item quantity="one">%d каментарый</item>
+        <item quantity="few">%d каментарыі</item>
+        <item quantity="many">%d каментарыяў</item>
+        <item quantity="other">%d каментарыя</item>
+    </plurals>
+    <plurals name="document_preview_bottom_sheet_page_count">
+        <item quantity="one">%1$s старонка</item>
+        <item quantity="few">%1$s старонкі</item>
+        <item quantity="many">%1$s старонак</item>
+        <item quantity="other">%1$s старонкі</item>
+    </plurals>
+    <plurals name="knowledge_sources">
+        <item quantity="one">Крыніца</item>
+        <item quantity="few">Крыніцы</item>
+        <item quantity="many">Крыніцы</item>
+        <item quantity="other">Крыніцы</item>
+    </plurals>
+    <plurals name="logout_keeps_account_details_body">
+        <item quantity="one">Да %1$d дня гэта прылада захоўвае некаторыя даныя ўліковага запісу, напрыклад ваша імя і адрас электроннай пошты.</item>
+        <item quantity="few">Да %1$d дзён гэта прылада захоўвае некаторыя даныя ўліковага запісу, напрыклад ваша імя і адрас электроннай пошты.</item>
+        <item quantity="many">Да %1$d дзён гэта прылада захоўвае некаторыя даныя ўліковага запісу, напрыклад ваша імя і адрас электроннай пошты.</item>
+        <item quantity="other">Да %1$d дня гэта прылада захоўвае некаторыя даныя ўліковага запісу, напрыклад ваша імя і адрас электроннай пошты.</item>
+    </plurals>
+    <plurals name="map_display_tool_rating_reviews">
+        <item quantity="one">Рэйтынг %1$s, %2$s водгук</item>
+        <item quantity="few">Рэйтынг %1$s, %2$s водгукі</item>
+        <item quantity="many">Рэйтынг %1$s, %2$s водгукаў</item>
+        <item quantity="other">Рэйтынг %1$s, %2$s водгуку</item>
+    </plurals>
+    <plurals name="map_display_tool_review_count">
+        <item quantity="one">%1$s водгук</item>
+        <item quantity="few">%1$s водгукі</item>
+        <item quantity="many">%1$s водгукаў</item>
+        <item quantity="other">%1$s водгуку</item>
+    </plurals>
+    <plurals name="mcp_prefill_attach_dialog_title">
+        <item quantity="one">%1$s хоча прымацаваць да вашага паведамлення %2$d выяву</item>
+        <item quantity="few">%1$s хоча прымацаваць да вашага паведамлення %2$d выявы</item>
+        <item quantity="many">%1$s хоча прымацаваць да вашага паведамлення %2$d выяў</item>
+        <item quantity="other">%1$s хоча прымацаваць да вашага паведамлення %2$d выявы</item>
+    </plurals>
+    <plurals name="memory_edit_many_files">
+        <item quantity="one">%1$d файл памяці</item>
+        <item quantity="few">%1$d файлы памяці</item>
+        <item quantity="many">%1$d файлаў памяці</item>
+        <item quantity="other">%1$d файла памяці</item>
+    </plurals>
+    <plurals name="move_chats_partial_failure">
+        <item quantity="one">Не ўдалося перамясціць %1$d чат</item>
+        <item quantity="few">Не ўдалося перамясціць %1$d чаты</item>
+        <item quantity="many">Не ўдалося перамясціць %1$d чатаў</item>
+        <item quantity="other">Не ўдалося перамясціць %1$d чата</item>
+    </plurals>
+    <plurals name="move_chats_title">
+        <item quantity="one">Перамясціць %d чат</item>
+        <item quantity="few">Перамясціць %d чаты</item>
+        <item quantity="many">Перамясціць %d чатаў</item>
+        <item quantity="other">Перамясціць %d чата</item>
+    </plurals>
+    <plurals name="move_sessions_partial_failure">
+        <item quantity="one">Не ўдалося перамясціць %1$d сеанс</item>
+        <item quantity="few">Не ўдалося перамясціць %1$d сеансы</item>
+        <item quantity="many">Не ўдалося перамясціць %1$d сеансаў</item>
+        <item quantity="other">Не ўдалося перамясціць %1$d сеанса</item>
+    </plurals>
+    <plurals name="move_sessions_title">
+        <item quantity="one">Перамясціць %d сеанс</item>
+        <item quantity="few">Перамясціць %d сеансы</item>
+        <item quantity="many">Перамясціць %d сеансаў</item>
+        <item quantity="other">Перамясціць %d сеанса</item>
+    </plurals>
+    <plurals name="nav_drawer_pinned_show_all">
+        <item quantity="one">Паказаць усе (%1$d)</item>
+        <item quantity="few">Паказаць усе (%1$d)</item>
+        <item quantity="many">Паказаць усе (%1$d)</item>
+        <item quantity="other">Паказаць усе (%1$d)</item>
+    </plurals>
+    <plurals name="notification_project_sessions_waiting">
+        <item quantity="one">%1$d трэд чакае</item>
+        <item quantity="few">%1$d трэды чакаюць</item>
+        <item quantity="many">%1$d трэдаў чакаюць</item>
+        <item quantity="other">%1$d трэда чакаюць</item>
+    </plurals>
+    <plurals name="notification_project_waiting_for_approval">
+        <item quantity="one">Чакаюць адабрэння: %1$d</item>
+        <item quantity="few">Чакаюць адабрэння: %1$d</item>
+        <item quantity="many">Чакаюць адабрэння: %1$d</item>
+        <item quantity="other">Чакаюць адабрэння: %1$d</item>
+    </plurals>
+    <plurals name="permissions_enabled_count">
+        <item quantity="one">Уключана: %1$d</item>
+        <item quantity="few">Уключана: %1$d</item>
+        <item quantity="many">Уключана: %1$d</item>
+        <item quantity="other">Уключана: %1$d</item>
+    </plurals>
+    <plurals name="project_details_knowledge_file_count">
+        <item quantity="one">%d файл</item>
+        <item quantity="few">%d файлы</item>
+        <item quantity="many">%d файлаў</item>
+        <item quantity="other">%d файла</item>
+    </plurals>
+    <plurals name="question_card_answered_caption">
+        <item quantity="one">Пытанне</item>
+        <item quantity="few">Пытанні</item>
+        <item quantity="many">Пытанні</item>
+        <item quantity="other">Пытанні</item>
+    </plurals>
+    <plurals name="question_card_selected_count">
+        <item quantity="one">Выбрана: %1$d</item>
+        <item quantity="few">Выбрана: %1$d</item>
+        <item quantity="many">Выбрана: %1$d</item>
+        <item quantity="other">Выбрана: %1$d</item>
+    </plurals>
+    <plurals name="rate_limit_messages_remaining">
+        <item quantity="one">Засталося %1$d паведамленне</item>
+        <item quantity="few">Засталося %1$d паведамленні</item>
+        <item quantity="many">Засталося %1$d паведамленняў</item>
+        <item quantity="other">Засталося %1$d паведамлення</item>
+    </plurals>
+    <plurals name="research_results_count">
+        <item quantity="one">%1$d вынік</item>
+        <item quantity="few">%1$d вынікі</item>
+        <item quantity="many">%1$d вынікаў</item>
+        <item quantity="other">%1$d выніку</item>
+    </plurals>
+    <plurals name="research_sources_count">
+        <item quantity="one">%1$d крыніца</item>
+        <item quantity="few">%1$d крыніцы</item>
+        <item quantity="many">%1$d крыніц</item>
+        <item quantity="other">%1$d крыніцы</item>
+    </plurals>
+    <plurals name="routine_create_connectors_collapsed">
+        <item quantity="one">%1$s і яшчэ %2$d</item>
+        <item quantity="few">%1$s і яшчэ %2$d</item>
+        <item quantity="many">%1$s і яшчэ %2$d</item>
+        <item quantity="other">%1$s і яшчэ %2$d</item>
+    </plurals>
+    <plurals name="routine_edit_connectors_unavailable">
+        <item quantity="one">Недаступна ў праграме: %1$d</item>
+        <item quantity="few">Недаступна ў праграме: %1$d</item>
+        <item quantity="many">Недаступна ў праграме: %1$d</item>
+        <item quantity="other">Недаступна ў праграме: %1$d</item>
+    </plurals>
+    <plurals name="routine_github_filter_too_many_values">
+        <item quantity="one">Умова фільтра GitHub можа мець не больш за %1$d значэнне</item>
+        <item quantity="few">Умова фільтра GitHub можа мець не больш за %1$d значэнні</item>
+        <item quantity="many">Умова фільтра GitHub можа мець не больш за %1$d значэнняў</item>
+        <item quantity="other">Умова фільтра GitHub можа мець не больш за %1$d значэння</item>
+    </plurals>
+    <plurals name="routine_github_filter_value_too_long">
+        <item quantity="one">Значэнне фільтра GitHub можа мець не больш за %1$d сімвал</item>
+        <item quantity="few">Значэнне фільтра GitHub можа мець не больш за %1$d сімвалы</item>
+        <item quantity="many">Значэнне фільтра GitHub можа мець не больш за %1$d сімвалаў</item>
+        <item quantity="other">Значэнне фільтра GitHub можа мець не больш за %1$d сімвала</item>
+    </plurals>
+    <plurals name="session_edits_sheet_cut_edits">
+        <item quantity="one">%1$d праўка занадта вялікая для паказу</item>
+        <item quantity="few">%1$d праўкі занадта вялікія для паказу</item>
+        <item quantity="many">%1$d правак занадта вялікія для паказу</item>
+        <item quantity="other">%1$d праўкі занадта вялікія для паказу</item>
+    </plurals>
+    <plurals name="session_list_delete_selected_partial_failure">
+        <item quantity="one">Не ўдалося выдаліць %1$d сеанс</item>
+        <item quantity="few">Не ўдалося выдаліць %1$d сеансы</item>
+        <item quantity="many">Не ўдалося выдаліць %1$d сеансаў</item>
+        <item quantity="other">Не ўдалося выдаліць %1$d сеанса</item>
+    </plurals>
+    <plurals name="session_list_delete_selected_title">
+        <item quantity="one">Выдаліць %1$d сеанс?</item>
+        <item quantity="few">Выдаліць %1$d сеансы?</item>
+        <item quantity="many">Выдаліць %1$d сеансаў?</item>
+        <item quantity="other">Выдаліць %1$d сеанса?</item>
+    </plurals>
+    <plurals name="stt_education_time_limit">
+        <item quantity="one">Гаварыце не больш за %1$s хвіліну</item>
+        <item quantity="few">Гаварыце не больш за %1$s хвіліны</item>
+        <item quantity="many">Гаварыце не больш за %1$s хвілін</item>
+        <item quantity="other">Гаварыце не больш за %1$s хвіліны</item>
+    </plurals>
+    <plurals name="suggested_connector_card_header">
+        <item quantity="one">Рэкамендаваны канектар</item>
+        <item quantity="few">Рэкамендаваныя канектары</item>
+        <item quantity="many">Рэкамендаваныя канектары</item>
+        <item quantity="other">Рэкамендаваныя канектары</item>
+    </plurals>
+    <plurals name="suggested_skills_show_all">
+        <item quantity="one">Паказаць усе (%1$d)</item>
+        <item quantity="few">Паказаць усе (%1$d)</item>
+        <item quantity="many">Паказаць усе (%1$d)</item>
+        <item quantity="other">Паказаць усе (%1$d)</item>
+    </plurals>
+    <plurals name="thread_replies">
+        <item quantity="one">%1$d адказ</item>
+        <item quantity="few">%1$d адказы</item>
+        <item quantity="many">%1$d адказаў</item>
+        <item quantity="other">%1$d адказу</item>
+    </plurals>
+    <plurals name="usage_credit_bundle_expires_in_days">
+        <item quantity="one">Тэрмін дзеяння сканчаецца праз %1$d дзень</item>
+        <item quantity="few">Тэрмін дзеяння сканчаецца праз %1$d дні</item>
+        <item quantity="many">Тэрмін дзеяння сканчаецца праз %1$d дзён</item>
+        <item quantity="other">Тэрмін дзеяння сканчаецца праз %1$d дня</item>
+    </plurals>
+    <plurals name="usage_credits_count">
+        <item quantity="one">%1$d крэдыт</item>
+        <item quantity="few">%1$d крэдыты</item>
+        <item quantity="many">%1$d крэдытаў</item>
+        <item quantity="other">%1$d крэдыту</item>
+    </plurals>
+</resources>

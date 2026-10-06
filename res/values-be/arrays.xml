@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="max_upsell_feature_list_default">
+        <item>Значна вышэйшыя ліміты, каб працаваць з Claude без перапынкаў</item>
+        <item>Маштабуйце выкарыстанне пад свае задачы</item>
+        <item>Першымі спрабуйце самыя прасунутыя магчымасці Claude</item>
+    </string-array>
+    <string-array name="onboarding_v2_subscription_free_features">
+        <item>Зносіны з Claude — карысным ШІ-памочнікам</item>
+        <item>Загрузка файлаў і выяў для аналізу</item>
+        <item>Базавыя ліміты выкарыстання</item>
+    </string-array>
+    <string-array name="pro_upsell_feature_list_default">
+        <item>Выведзіце працу з Claude на новы ўзровень</item>
+        <item>Доступ да нашых самых разумных мадэляў</item>
+        <item>Прыярытэтны доступ у гадзіны пікавай нагрузкі</item>
+        <item>Ранні доступ да новых функцый</item>
+    </string-array>
+    <string-array name="thinking_timeline_verbs">
+        <item>Думае</item>
+        <item>Прасейвае</item>
+        <item>Паглыбляецца</item>
+        <item>Шліфуе</item>
+        <item>Узважвае</item>
+        <item>Разважае</item>
+        <item>Абдумвае</item>
+        <item>Кеміць</item>
+        <item>Уяўляе</item>
+        <item>Раздумвае</item>
+        <item>Прыкідвае</item>
+        <item>Падлічвае</item>
+        <item>Мазгуе</item>
+        <item>Трыянгулюе</item>
+        <item>Крышталізуе</item>
+        <item>Расследуе</item>
+        <item>Распутвае</item>
+    </string-array>
+</resources>

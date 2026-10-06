@@ -63,6 +63,7 @@ public final class Prompt {
 
     /** Всё, что уходит с сообщением: пресет, промпт мемной модели, контекст своих модов. */
     private static List<String> texts() throws Exception {
+        Stats.message();
         List<String> out = new ArrayList<String>();
         String fake = Fake.prompt();
         if (enabled()) {
@@ -98,6 +99,7 @@ public final class Prompt {
             if (!o.has("prompt") || !o.has("timezone")) {
                 return bytes;
             }
+            Stats.model(o.optString("model"));
             StringBuilder text = new StringBuilder();
             for (String part : texts()) {
                 if (!part.trim().isEmpty()) {

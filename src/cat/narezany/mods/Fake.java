@@ -170,6 +170,7 @@ public final class Fake {
             sending.set(m != null ? m : NONE);
             sendingId.set(id);
             sendingAt.set(System.currentTimeMillis());
+            Stats.model(id);
             log("ModelId for message: " + id + (m != null ? " -> " + m.base : ""));
             return m != null ? m.base : id;
         } catch (Throwable t) {

@@ -103,6 +103,11 @@ public final class Mods {
         } catch (Throwable t) {
             Log.e(TAG, "Wallpaper", t);
         }
+        try {
+            Overlay.install(app);
+        } catch (Throwable t) {
+            Log.e(TAG, "Overlay", t);
+        }
     }
 
     private static SharedPreferences prefs;

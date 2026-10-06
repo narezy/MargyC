@@ -429,6 +429,27 @@ public final class Pet {
             }
         }
 
+        /** Длина текста в найденном поле ввода (без подсказки), или -1. Звать после editable(). */
+        int textLength(View host) {
+            if (cached == Integer.MIN_VALUE) {
+                return -1;
+            }
+            try {
+                AccessibilityNodeProvider provider = host.getAccessibilityNodeProvider();
+                AccessibilityNodeInfo n = provider != null ? provider.createAccessibilityNodeInfo(cached) : null;
+                if (n == null) {
+                    return -1;
+                }
+                if (android.os.Build.VERSION.SDK_INT >= 26 && n.isShowingHintText()) {
+                    return 0;
+                }
+                CharSequence t = n.getText();
+                return t == null ? 0 : t.length();
+            } catch (Throwable t) {
+                return -1;
+            }
+        }
+
         /** Есть ли в нижней половине экрана узел с таким описанием (кнопка «Остановить» у поля ввода). */
         boolean has(View host, String description) {
             if (delegate == null || description == null || description.isEmpty()) {
@@ -505,7 +526,7 @@ public final class Pet {
         }
     }
 
-    private static View findHost(View v) {
+    static View findHost(View v) {
         if (v instanceof Layer) {
             return null; // в Clawd свой AndroidComposeView
         }

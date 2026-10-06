@@ -37,9 +37,11 @@ public final class ModsActivity extends Activity {
             IC_INSTALL = 0xe87b, IC_DOCS = 0xea19, IC_DOWNLOAD = 0xf090, IC_OPEN = 0xe873, IC_GALLERY = 0xe41d,
             IC_FONT = 0xe167, IC_REACT = 0xea65, IC_LOCK = 0xe897, IC_TIMER = 0xe425, IC_RECENTS = 0xe8f5,
             IC_CATALOG = 0xea12, IC_UPDATE = 0xe923, IC_BETA = 0xea4b, IC_CARD = 0xe870, IC_DONATE = 0xea70,
-            IC_LICENSE = 0xe90c, IC_ICON = 0xe5c3, IC_WALLPAPER = 0xe3f4, IC_STREAMER = 0xe8f4, IC_GREETING = 0xe769;
+            IC_LICENSE = 0xe90c, IC_ICON = 0xe5c3, IC_WALLPAPER = 0xe3f4, IC_STREAMER = 0xe8f4, IC_GREETING = 0xe769,
+            IC_SEASON = 0xeb3b, IC_SPLASH = 0xeb9b, IC_COUNTER = 0xeac7, IC_STATS = 0xf092, IC_SHARE = 0xe80d,
+            IC_DELETE = 0xe872;
     private static final int PICK_WALLPAPER = 10;
-    private Ui.Row fontRow, lockTimeRow, updateRow, langRow, iconRow, wallpaperRow, greetingRow;
+    private Ui.Row fontRow, lockTimeRow, updateRow, langRow, iconRow, wallpaperRow, greetingRow, seasonRow, statsRow;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -70,6 +72,8 @@ public final class ModsActivity extends Activity {
         content.addView(fakeGroup);
         content.addView(ui.sectionTitle(L.t("Диалоги")));
         content.addView(dialogsGroup());
+        content.addView(ui.sectionTitle(L.t("Статистика")));
+        content.addView(statsGroup());
         content.addView(ui.sectionTitle(L.t("Свои моды")));
         pluginGroup = ui.column();
         content.addView(pluginGroup);
@@ -253,6 +257,23 @@ public final class ModsActivity extends Activity {
         greetingRow.chevron();
         greetingRow.setOnClickListener(v -> chooseGreeting());
         g.addView(greetingRow);
+        seasonRow = ui.new Row(L.t("Сезонные эффекты"), "");
+        seasonRow.icon(IC_SEASON);
+        seasonRow.chevron();
+        seasonRow.setOnClickListener(v -> chooseSeason());
+        g.addView(seasonRow);
+        Ui.Row splash = ui.new Row(L.t("Свой экран запуска"),
+                L.t("При запуске Claude на секунду появляется Clawd на фоне твоей темы."));
+        splash.toggle(Overlay.splash(), true, on -> {
+            try {
+                Overlay.setSplash(on);
+                return true;
+            } catch (Exception e) {
+                return false;
+            }
+        });
+        splash.icon(IC_SPLASH);
+        g.addView(splash);
         fontRow = ui.new Row(L.t("Шрифт"), "");
         fontRow.icon(IC_FONT);
         fontRow.chevron();
@@ -864,8 +885,138 @@ public final class ModsActivity extends Activity {
         });
         open.icon(IC_OPEN);
         g.addView(open);
+        Ui.Row counter = ui.new Row(L.t("Счётчик символов"),
+                L.t("Над полем ввода видно, сколько символов в сообщении."));
+        counter.toggle(Overlay.counter(), true, on -> {
+            try {
+                Overlay.setCounter(on);
+                return true;
+            } catch (Exception e) {
+                return false;
+            }
+        });
+        counter.icon(IC_COUNTER);
+        g.addView(counter);
         ui.restyle(g);
         return g;
+    }
+
+    // ---- статистика ----
+
+    private View statsGroup() {
+        LinearLayout g = ui.column();
+        statsRow = ui.new Row(L.t("Claude в цифрах"), "");
+        statsRow.icon(IC_STATS);
+        statsRow.chevron();
+        statsRow.setOnClickListener(v -> openStats());
+        g.addView(statsRow);
+        ui.restyle(g);
+        return g;
+    }
+
+    private static String statsLine(Stats.Summary s) {
+        if (s.total == 0) {
+            return L.t("Считается с установки 1.3, только на телефоне. Пока сообщений нет.");
+        }
+        return L.t("Сообщений: ") + s.total + " · " + L.t("Серия: ") + s.streak + L.t(" дн. подряд");
+    }
+
+    private void openStats() {
+        final Stats.Summary s = Stats.summary();
+        final Ui.Sheet sheet = ui.new Sheet(L.t("Claude в цифрах"));
+        if (s.total == 0) {
+            sheet.message(statsLine(s));
+            sheet.button(L.t("Закрыть"), true, null).show();
+            return;
+        }
+        sheet.view(statLine(String.valueOf(s.total), L.t("сообщений отправлено")));
+        sheet.view(statLine(String.valueOf(s.activeDays), L.t("дней с Claude")));
+        sheet.view(statLine(String.valueOf(s.streak), L.t("дней подряд сейчас")));
+        if (!s.bestDay.isEmpty()) {
+            sheet.view(statLine(String.valueOf(s.bestDayCount), L.t("сообщений за самый активный день, ") + s.bestDay));
+        }
+        if (!s.favourite.isEmpty()) {
+            sheet.view(statLine(s.favourite, L.t("любимая модель")));
+        }
+        if (s.topHour >= 0) {
+            TextView h = ui.label(L.t("Чаще всего пишешь в ") + s.topHour + ":00", 14, ui.secondary, ui.regular);
+            h.setPadding(0, ui.dp(12), 0, ui.dp(6));
+            sheet.view(h);
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, ui.dp(72));
+            View chart = new HoursChart(this, s.hours, ui.accent, ui.secondary);
+            chart.setLayoutParams(lp);
+            sheet.view(chart);
+        }
+        if (!s.since.isEmpty()) {
+            TextView since = ui.label(L.t("С ") + s.since + L.t(". Считается только на телефоне и никуда не отправляется."),
+                    13, ui.secondary, ui.regular);
+            since.setPadding(0, ui.dp(12), 0, 0);
+            sheet.view(since);
+        }
+        sheet.button(L.t("Сбросить"), false, () -> ui.new Sheet(L.t("Сбросить статистику?"))
+                .button(L.t("Отмена"), false, null)
+                .button(L.t("Сбросить"), true, () -> {
+                    try {
+                        Stats.reset();
+                    } catch (Exception ignored) {
+                    }
+                    refresh();
+                }).show());
+        sheet.button(L.t("Поделиться"), true, () -> {
+            Intent send = new Intent(Intent.ACTION_SEND).setType("text/plain")
+                    .putExtra(Intent.EXTRA_TEXT, Stats.share(s));
+            try {
+                startActivity(Intent.createChooser(send, L.t("Поделиться")));
+            } catch (Exception ignored) {
+            }
+        });
+        sheet.show();
+    }
+
+    private View statLine(String value, String what) {
+        LinearLayout row = new LinearLayout(this);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setGravity(Gravity.CENTER_VERTICAL);
+        row.setPadding(0, ui.dp(6), 0, ui.dp(6));
+        TextView v = ui.label(value, 24, ui.accent, ui.medium);
+        v.setPadding(0, 0, ui.dp(12), 0);
+        v.setMaxLines(1);
+        row.addView(v);
+        TextView w = ui.label(what, 15, ui.text, ui.regular);
+        row.addView(w, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
+        return row;
+    }
+
+    /** Столбики по часам суток: когда пишешь чаще. */
+    private static final class HoursChart extends View {
+        private final int[] hours;
+        private final android.graphics.Paint bar = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
+        private final android.graphics.Paint dim = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
+        private final android.graphics.RectF r = new android.graphics.RectF();
+
+        HoursChart(android.content.Context c, int[] hours, int accent, int secondary) {
+            super(c);
+            this.hours = hours;
+            bar.setColor(accent);
+            dim.setColor(secondary);
+            dim.setAlpha(60);
+            dim.setTextSize(10 * c.getResources().getDisplayMetrics().scaledDensity);
+        }
+
+        @Override
+        protected void onDraw(android.graphics.Canvas canvas) {
+            int max = 1;
+            for (int h : hours) {
+                max = Math.max(max, h);
+            }
+            float w = getWidth() / 24f, gap = w * 0.2f, bottom = getHeight();
+            float radius = w * 0.25f;
+            for (int i = 0; i < 24; i++) {
+                float top = bottom - Math.max(w * 0.3f, bottom * hours[i] / (float) max);
+                r.set(i * w + gap / 2, top, (i + 1) * w - gap / 2, bottom);
+                canvas.drawRoundRect(r, radius, radius, hours[i] > 0 ? bar : dim);
+            }
+        }
     }
 
     /** Диалог из .md как чат: твои сообщения справа пузырями, Claude слева, как в приложении. */
@@ -1229,6 +1380,44 @@ public final class ModsActivity extends Activity {
                                 refresh();
                             }).show();
                 });
+        sheet.show();
+    }
+
+    private static String seasonName(String s) {
+        switch (s) {
+            case "auto":
+                return L.t("По времени года");
+            case "snow":
+                return L.t("Снег");
+            case "leaves":
+                return L.t("Листопад");
+            case "petals":
+                return L.t("Лепестки сакуры");
+            case "stars":
+                return L.t("Звёзды");
+            default:
+                return L.t("Выключены");
+        }
+    }
+
+    private void chooseSeason() {
+        final Ui.Sheet sheet = ui.new Sheet(L.t("Сезонные эффекты"));
+        String current = Overlay.season();
+        String[][] all = {
+            {"off", ""},
+            {"auto", L.t("Зимой снег, весной лепестки, осенью листья, летом ничего.")},
+            {"snow", ""}, {"leaves", ""}, {"petals", ""}, {"stars", ""},
+        };
+        for (final String[] o : all) {
+            sheet.item(seasonName(o[0]), o[1], o[0].equals(current), v -> {
+                try {
+                    Overlay.setSeason(o[0]);
+                } catch (Exception ignored) {
+                }
+                sheet.dialog.dismiss();
+                refresh();
+            });
+        }
         sheet.show();
     }
 
@@ -1639,6 +1828,8 @@ public final class ModsActivity extends Activity {
         iconRow.sub(Icons.name(Icons.current(this)), 1);
         wallpaperRow.sub(wallpaperName(), 1);
         greetingRow.sub(greetingName(Greeting.mode()), 1);
+        seasonRow.sub(seasonName(Overlay.season()), 1);
+        statsRow.sub(statsLine(Stats.summary()), 2);
         lockTimeRow.sub(Lock.timeoutLabel(Lock.timeout()), 1);
         showUpdate();
     }
