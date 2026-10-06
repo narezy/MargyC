@@ -540,18 +540,42 @@ def patch_account(sm):
         raise PatchError("Account: нет полей имени и почты")
     acc.hook(code)
 
-    # запрос изменения профиля: точки вместо имени на сервер не уходят
+    # запрос изменения профиля: точки вместо имени на сервер не уходят. Только в обычных конструкторах — ими
+    # приложение собирает запрос. Синтетический (разбор JSON) не трогаем: там компилятор кладёт один и тот же
+    # null-регистр в поля разных типов, и после move-result он стал бы String — верификатор ART отвергает
+    # весь класс (VerifyError при входе в аккаунт, 1.3).
     upd = Serial(sm, "com.anthropic.claude.api.account.UpdateAccountRequest")
     names = upd.fields("full_name", "display_name")
     t = upd.file.read_text()
+    ctor = re.compile(r"(\.method (?![^\n]*synthetic)[^\n]*constructor <init>\(([^)]*)\)V\n)([\s\S]*?)(\.end method)")
+    patched = 0
     for e, restore in (("full_name", "restoreFull"), ("display_name", "restoreDisplay")):
         field = f"{upd.cls}->{names[e]}:Ljava/lang/String;"
-        t, n = re.subn(r"(\n\s+)iput-object (\w+), p0, " + re.escape(field),
-                       lambda m: (f"{m.group(1)}invoke-static/range {{{m.group(2)} .. {m.group(2)}}}, {MOD}Streamer;->{restore}"
-                                  f"(Ljava/lang/String;)Ljava/lang/String;\n{m.group(1)}move-result-object {m.group(2)}\n"
-                                  f"{m.group(1)}iput-object {m.group(2)}, p0, {field}"), t)
-        if n == 0:
-            raise PatchError(f"UpdateAccountRequest: не нашёл запись {e}")
+
+        def fix(m):
+            nonlocal patched
+            params = PARAM.findall(m.group(2))
+            strings = set()  # p-регистры с объявленным типом String: их тип move-result не меняет
+            reg = 1
+            for ptype in params:
+                if ptype == "Ljava/lang/String;":
+                    strings.add(f"p{reg}")
+                reg += 2 if ptype in ("J", "D") else 1
+
+            def one(r):
+                nonlocal patched
+                if r.group(2) not in strings:
+                    return r.group(0)
+                patched += 1
+                return (f"{r.group(1)}invoke-static/range {{{r.group(2)} .. {r.group(2)}}}, {MOD}Streamer;->{restore}"
+                        f"(Ljava/lang/String;)Ljava/lang/String;\n{r.group(1)}move-result-object {r.group(2)}\n"
+                        f"{r.group(1)}iput-object {r.group(2)}, p0, {field}")
+            body = re.sub(r"(\n\s+)iput-object (\w+), p0, " + re.escape(field), one, m.group(3))
+            return m.group(1) + body + m.group(4)
+        before = patched
+        t = ctor.sub(fix, t)
+        if patched == before:
+            raise PatchError(f"UpdateAccountRequest: не нашёл запись {e} в обычном конструкторе")
     upd.file.write_text(t)
 
     slot = Serial(sm, "com.anthropic.claude.api.account.GreetingSlot")
