@@ -9,8 +9,9 @@ import java.util.regex.Pattern;
 
 /**
  * Режим стримера: имя и почта аккаунта не видны нигде в интерфейсе Claude, включая приветствие на
- * главном экране. Сами данные аккаунта не меняются (их приложение отправляет и обратно): патчер только
- * сообщает моду имя и почту при разборе Account, а прячутся они при показе текста ({@link Tr}).
+ * главном экране и поля профиля. Имена заменяются точками прямо при разборе Account; в запрос изменения
+ * профиля вместо точек возвращается настоящее имя, так что на сервер они не уходят. Почта прячется только
+ * при показе текста ({@link Tr}).
  */
 public final class Streamer {
     static final String MASK = "•••••";
@@ -36,7 +37,53 @@ public final class Streamer {
         on = value;
     }
 
-    /** Хук: поле email_address / full_name / display_name аккаунта при разборе ответа сервера. */
+    /** Хук: full_name аккаунта. В режиме стримера в приложение попадают точки. */
+    public static String fullName(String value) {
+        return name(value, "streamer_full");
+    }
+
+    /** Хук: display_name аккаунта («Как к вам обращаться?»). */
+    public static String displayName(String value) {
+        return name(value, "streamer_display");
+    }
+
+    private static String name(String value, String key) {
+        try {
+            if (value == null || value.contains(MASK)) {
+                return value; // уже замазанное (из кэша приложения) не запоминаем
+            }
+            seen(value);
+            Mods.prefs().edit().putString(key, value).apply();
+            return enabled() && !value.trim().isEmpty() ? MASK : value;
+        } catch (Throwable t) {
+            return value;
+        }
+    }
+
+    /** Хук: full_name в запросе изменения профиля — точки обратно в настоящее имя. */
+    public static String restoreFull(String value) {
+        return restore(value, "streamer_full");
+    }
+
+    public static String restoreDisplay(String value) {
+        return restore(value, "streamer_display");
+    }
+
+    private static String restore(String value, String key) {
+        try {
+            if (value != null && value.contains(MASK)) {
+                String real = Mods.prefs().getString(key, "");
+                if (!real.isEmpty()) {
+                    Fake.log("streamer: real name restored in profile update");
+                    return value.replace(MASK, real);
+                }
+            }
+        } catch (Throwable ignored) {
+        }
+        return value;
+    }
+
+    /** Хук: поле email_address аккаунта при разборе ответа сервера. */
     public static void seen(String value) {
         try {
             if (value == null || value.trim().length() < 2) {

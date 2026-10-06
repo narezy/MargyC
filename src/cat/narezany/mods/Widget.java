@@ -32,6 +32,7 @@ public final class Widget extends AppWidgetProvider {
 
     @Override
     public void onUpdate(Context ctx, AppWidgetManager mgr, int[] ids) {
+        Fake.log("widget: update " + ids.length);
         update(ctx, mgr, ids, null);
     }
 

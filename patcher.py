@@ -223,7 +223,9 @@ def patch_manifest(dec):
 def patch_resources(dec):
     lc = dec / "res/xml/locales_config.xml"
     s = lc.read_text()
-    for lang in [d.name[len("values-"):] for d in sorted((HERE / "res").glob("values-*"))]:
+    langs = [d.name[len("values-"):] for d in sorted((HERE / "res").glob("values-*"))
+             if re.fullmatch(r"values-[a-z]{2,3}(-r[A-Z]{2})?", d.name)]  # только языки, не values-v31 и т. п.
+    for lang in langs:
         if f'android:name="{lang}"' not in s:
             s = sub_once(s, r"(\n\s*</locale-config>)", f'\n    <locale android:name="{lang}" />\\1', "locales_config")
     lc.write_text(s)
@@ -519,23 +521,61 @@ def patch_fonts(sm):
 
 
 def patch_account(sm):
-    """Режим стримера и свои приветствия. Account: имя и почта — в Streamer.seen (только чтение).
-    GreetingSlot.text (приветствие главного экрана приходит с сервера) — через Greeting.slot."""
+    """Режим стримера и свои приветствия. Account: имя и почта идут через Streamer.seen. Имена в режиме
+    стримера заменяются на точки прямо в аккаунте (так они скрыты и в полях профиля), почта — только на экране (Tr).
+    Приветствие главного экрана (GreetingSlot.text с сервера) — через Greeting.server в функции, которая выбирает
+    слот («chat», «code», «voice_start»): дальше текст становится AnnotatedString и мимо Tr."""
     acc = Serial(sm, "com.anthropic.claude.api.account.Account")
     code = ""
     for e in ("email_address", "full_name", "display_name"):
         if e in acc.elements and acc.types[acc.elements.index(e) + 1] == "Ljava/lang/String;":
             r = acc.reg(e)
-            code += f"invoke-static/range {{p{r} .. p{r}}}, {MOD}Streamer;->seen(Ljava/lang/String;)V\n\n    "
+            if e == "email_address":
+                code += f"invoke-static/range {{p{r} .. p{r}}}, {MOD}Streamer;->seen(Ljava/lang/String;)V\n\n    "
+            else:
+                hook = "fullName" if e == "full_name" else "displayName"
+                code += (f"invoke-static/range {{p{r} .. p{r}}}, {MOD}Streamer;->{hook}(Ljava/lang/String;)Ljava/lang/String;\n\n"
+                         f"    move-result-object p{r}\n\n    ")
     if not code:
         raise PatchError("Account: нет полей имени и почты")
     acc.hook(code)
+
+    # запрос изменения профиля: точки вместо имени на сервер не уходят
+    upd = Serial(sm, "com.anthropic.claude.api.account.UpdateAccountRequest")
+    names = upd.fields("full_name", "display_name")
+    t = upd.file.read_text()
+    for e, restore in (("full_name", "restoreFull"), ("display_name", "restoreDisplay")):
+        field = f"{upd.cls}->{names[e]}:Ljava/lang/String;"
+        t, n = re.subn(r"(\n\s+)iput-object (\w+), p0, " + re.escape(field),
+                       lambda m: (f"{m.group(1)}invoke-static/range {{{m.group(2)} .. {m.group(2)}}}, {MOD}Streamer;->{restore}"
+                                  f"(Ljava/lang/String;)Ljava/lang/String;\n{m.group(1)}move-result-object {m.group(2)}\n"
+                                  f"{m.group(1)}iput-object {m.group(2)}, p0, {field}"), t)
+        if n == 0:
+            raise PatchError(f"UpdateAccountRequest: не нашёл запись {e}")
+    upd.file.write_text(t)
+
     slot = Serial(sm, "com.anthropic.claude.api.account.GreetingSlot")
     if "text" not in slot.elements or slot.types[slot.elements.index("text") + 1] != "Ljava/lang/String;":
         raise PatchError("GreetingSlot: нет text: String")
-    r = slot.reg("text")
-    slot.hook(f"invoke-static/range {{p{r} .. p{r}}}, {MOD}Greeting;->slot(Ljava/lang/String;)Ljava/lang/String;\n\n"
-              f"    move-result-object p{r}\n")
+    field = f"{slot.cls}->{slot.fields('text')['text']}:Ljava/lang/String;"
+    sig = "(Ljava/util/List;Ljava/lang/String;Ljava/time/ZonedDateTime;)Ljava/lang/String;"
+    done = 0
+    for f in sm.files_with(field):
+        t = f.read_text()
+        def fix(m):
+            body = re.sub(r"(\n\s+)return-object (\w+)\n",
+                          lambda r: (f"{r.group(1)}invoke-static {{{r.group(2)}, p1}}, {MOD}Greeting;->server"
+                                     f"(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;\n"
+                                     f"{r.group(1)}move-result-object {r.group(2)}\n{r.group(1)}return-object {r.group(2)}\n"),
+                          m.group(2))
+            return m.group(1) + body + m.group(3)
+        t2, n = re.subn(r"(\.method public static final \w+" + re.escape(sig) + r"\n)((?:(?!\.end method)[\s\S])*?" + re.escape(field)
+                        + r"(?:(?!\.end method)[\s\S])*?)(\.end method)", fix, t)
+        if n:
+            f.write_text(t2)
+            done += n
+    if done != 1:
+        raise PatchError(f"приветствие: функций выбора слота найдено {done}, ожидалась одна")
 
 
 def patch_rest_body(sm):

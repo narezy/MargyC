@@ -31,7 +31,20 @@ public final class GameActivity extends Activity {
         ui.setupWindow(this);
         FrameLayout box = new FrameLayout(this);
         box.addView(new Game(this, ui));
-        setContentView(ui.screen(this, L.t("Игра с Clawd"), box));
+        View screen = ui.screen(this, L.t("Игра с Clawd"), box);
+        fill(screen); // экран кладёт содержимое в ScrollView, а там у игры была бы нулевая высота
+        setContentView(screen);
+    }
+
+    private static void fill(View v) {
+        if (v instanceof android.widget.ScrollView) {
+            ((android.widget.ScrollView) v).setFillViewport(true);
+        } else if (v instanceof android.view.ViewGroup) {
+            android.view.ViewGroup g = (android.view.ViewGroup) v;
+            for (int i = 0; i < g.getChildCount(); i++) {
+                fill(g.getChildAt(i));
+            }
+        }
     }
 
     /** Жук 9×6: 1 — тело, 2 — глаза. */

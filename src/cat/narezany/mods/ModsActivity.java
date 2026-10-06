@@ -276,11 +276,13 @@ public final class ModsActivity extends Activity {
         seasonRow.chevron();
         seasonRow.setOnClickListener(v -> chooseSeason());
         g.addView(seasonRow);
-        Ui.Row splash = ui.new Row(L.t("Свой экран запуска"),
-                L.t("При запуске Claude на секунду появляется Clawd на фоне твоей темы."));
-        splash.toggle(Overlay.splash(), true, on -> {
+        Ui.Row splash = ui.new Row(L.t("Свой экран запуска"), Overlay.splashSupported()
+                ? L.t("Clawd вместо логотипа Claude на экране загрузки. Со следующего запуска.")
+                : L.t("Clawd вместо логотипа Claude на экране загрузки. Нужен Android 13 или новее."));
+        splash.toggle(Overlay.splash(), Overlay.splashSupported(), on -> {
             try {
                 Overlay.setSplash(on);
+                Overlay.applySplash(this);
                 return true;
             } catch (Exception e) {
                 return false;
@@ -693,11 +695,22 @@ public final class ModsActivity extends Activity {
         android.appwidget.AppWidgetManager mgr = android.appwidget.AppWidgetManager.getInstance(this);
         boolean asked = false;
         try {
-            if (mgr.isRequestPinAppWidgetSupported()) {
+            // виден ли виджет системе: если нет, лаунчер его и не покажет
+            StringBuilder names = new StringBuilder();
+            boolean registered = false;
+            for (android.appwidget.AppWidgetProviderInfo info : mgr.getInstalledProvidersForPackage(getPackageName(), null)) {
+                names.append(info.provider.getShortClassName()).append(' ');
+                registered |= info.provider.getClassName().equals(Widget.class.getName());
+            }
+            boolean supported = mgr.isRequestPinAppWidgetSupported();
+            if (supported && registered) {
                 asked = mgr.requestPinAppWidget(new android.content.ComponentName(this, Widget.class), null, null);
             }
+            Fake.log("widget: registered=" + registered + ", pin supported=" + supported + ", asked=" + asked
+                    + ", providers: " + names.toString().trim());
         } catch (Exception e) {
             Log.e(Mods.TAG, "widget pin", e);
+            Fake.log("widget pin error: " + e);
         }
         if (!asked) {
             ui.new Sheet(L.t("Виджет на рабочий стол"))
@@ -1716,7 +1729,7 @@ public final class ModsActivity extends Activity {
         recents.icon(IC_RECENTS);
         g.addView(recents);
         Ui.Row streamer = ui.new Row(L.t("Режим стримера"),
-                L.t("Твои имя и почта скрыты везде в Claude, включая приветствие на главном экране. После перезапуска."));
+                L.t("Твои имя и почта скрыты везде в Claude, включая приветствие на главном экране и профиль. После перезапуска."));
         streamer.toggle(Streamer.enabled(), true, on -> {
             try {
                 Streamer.setEnabled(on);

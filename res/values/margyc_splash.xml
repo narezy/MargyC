@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Свой экран запуска: системный splash Claude с Clawd вместо логотипа. Ставится из мода через
+     SplashScreen.setSplashScreenTheme (Android 13+), фон остаётся как у Claude. -->
+<resources>
+    <style name="Theme.MargyC.Splash" parent="@style/Theme.Claude.Splash">
+        <item name="windowSplashScreenAnimatedIcon">@drawable/margyc_icon_fg_clawd</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/margyc_icon_fg_clawd</item>
+        <item name="android:windowSplashScreenBrandingImage">@null</item>
+    </style>
+</resources>

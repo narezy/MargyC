@@ -24,7 +24,6 @@ import java.util.Random;
  */
 final class Overlay {
     private static final String TAG_LAYER = "margyc-overlay";
-    private static boolean splashShown;
 
     private Overlay() {}
 
@@ -135,33 +134,44 @@ final class Overlay {
             }
             layer.start();
         }
-        if (splash() && !splashShown) {
-            splashShown = true;
-            showSplash(a, content);
+        applySplash(a);
+    }
+
+    /**
+     * Свой экран запуска — это системный splash приложения с темой Theme.MargyC.Splash (Clawd вместо логотипа
+     * Claude). Android 13+ запоминает тему splash для следующих запусков, поэтому достаточно выставить её из
+     * любого окна приложения; на Android 12 и старше так нельзя.
+     */
+    static boolean splashSupported() {
+        return android.os.Build.VERSION.SDK_INT >= 33;
+    }
+
+    static void applySplash(Activity a) {
+        if (!splashSupported()) {
+            return;
+        }
+        try {
+            boolean on = splash();
+            if (splashApplied != null && splashApplied == on) {
+                return;
+            }
+            int id = a.getResources().getIdentifier("Theme.MargyC.Splash", "style", a.getPackageName());
+            if (id == 0) {
+                id = a.getResources().getIdentifier("Theme_MargyC_Splash", "style", a.getPackageName());
+            }
+            if (on && id == 0) {
+                Fake.log("splash: no Theme.MargyC.Splash");
+                return;
+            }
+            a.getSplashScreen().setSplashScreenTheme(on ? id : android.content.res.Resources.ID_NULL);
+            splashApplied = on;
+            Fake.log("splash: " + (on ? "Clawd" : "Claude"));
+        } catch (Throwable t) {
+            Fake.log("splash error: " + t);
         }
     }
 
-    /** Экран запуска: фон темы и Clawd из анимаций приложения, потом плавно исчезает. */
-    private static void showSplash(Activity a, ViewGroup content) {
-        Ui ui = new Ui(a);
-        final FrameLayout cover = new FrameLayout(a);
-        cover.setBackgroundColor(ui.bg);
-        cover.setClickable(true);
-        View clawd = Pet.Frames.make(a, "Jumping", 0, 20, 2);
-        if (clawd != null) {
-            int w = ui.dp(165), h = ui.dp(111);
-            cover.addView(clawd, new FrameLayout.LayoutParams(w, h, Gravity.CENTER));
-        }
-        TextView name = ui.label("MargyC", 18, ui.secondary, ui.medium);
-        FrameLayout.LayoutParams nl = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.CENTER_HORIZONTAL | Gravity.BOTTOM);
-        nl.bottomMargin = ui.dp(64);
-        cover.addView(name, nl);
-        content.addView(cover, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.MATCH_PARENT));
-        cover.postDelayed(() -> cover.animate().alpha(0f).setDuration(300)
-                .withEndAction(() -> content.removeView(cover)).start(), 1500);
-    }
+    private static Boolean splashApplied;
 
     /** Прозрачный слой без касаний: эффекты и счётчик. */
     static final class Layer extends FrameLayout {

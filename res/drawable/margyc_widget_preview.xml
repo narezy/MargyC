@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Картинка виджета в списке виджетов лаунчера (некоторые лаунчеры без неё виджет не показывают). -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:width="250dp" android:height="80dp" android:drawable="@drawable/margyc_widget_bg" />
+    <item android:width="80dp" android:height="80dp" android:left="4dp" android:gravity="left|center_vertical"
+        android:drawable="@drawable/margyc_icon_fg_clawd" />
+</layer-list>

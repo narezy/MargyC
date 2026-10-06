@@ -47,15 +47,24 @@ public final class Greeting {
         chosen = null;
     }
 
-    /** Хук: текст слота приветствия из ответа сервера. */
-    public static String slot(String text) {
+    /**
+     * Хук: функция приложения, которая выбирает текст слота приветствия с сервера по ключу («chat» — главный
+     * экран, «code», «voice_start»). Дальше он становится AnnotatedString, поэтому меняем его здесь. Если
+     * сервер ничего не прислал (null), приложение покажет своё «Чем я могу помочь сегодня?», а мы — свою фразу.
+     */
+    public static String server(String text, String key) {
         try {
-            if (text != null && (!CLAUDE.equals(mode()) || Streamer.enabled()) && text.indexOf(MARK) < 0) {
-                return MARK + text;
+            String out = text;
+            if ("chat".equals(key) && !CLAUDE.equals(mode())) {
+                String mine = phrase();
+                if (mine != null) {
+                    out = mine;
+                }
             }
-        } catch (Throwable ignored) {
+            return Streamer.mask(out);
+        } catch (Throwable t) {
+            return text;
         }
-        return text;
     }
 
     /** Из Tr: помеченный текст — приветствие. */

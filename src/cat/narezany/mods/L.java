@@ -383,7 +383,7 @@ final class L {
         put("Сумерки", "Dusk");
         put("Считается с установки 1.3, только на телефоне. Пока сообщений нет.", "Counted since installing 1.3, on the phone only. No messages yet.");
         put("Счётчик символов", "Character counter");
-        put("Твои имя и почта скрыты везде в Claude, включая приветствие на главном экране. После перезапуска.", "Your name and email are hidden everywhere in Claude, including the home screen greeting. After a restart.");
+        put("Твои имя и почта скрыты везде в Claude, включая приветствие на главном экране и профиль. После перезапуска.", "Your name and email are hidden everywhere in Claude, including the home screen greeting and the profile. After a restart.");
         put("Фото из галереи. Под чатом, карточки сообщений остаются как есть.", "A photo from the gallery. Behind the chat; message cards stay as they are.");
         put("Чаще всего пишешь в ", "You write most often at ");
         put("Чаще всего пишу в ", "I write most often at ");
@@ -396,5 +396,7 @@ final class L {
         put("сообщений отправлено", "messages sent");
         put("утро: Доброе утро, {name}\nвечер: Как прошёл день?\nПривет!", "morning: Good morning, {name}\nevening: How was your day?\nHi!");
         put("это не картинка", "this is not an image");
+        put("Clawd вместо логотипа Claude на экране загрузки. Со следующего запуска.", "Clawd instead of the Claude logo on the loading screen. From the next launch.");
+        put("Clawd вместо логотипа Claude на экране загрузки. Нужен Android 13 или новее.", "Clawd instead of the Claude logo on the loading screen. Needs Android 13 or newer.");
     }
 }
