@@ -57,7 +57,11 @@ public final class Widget extends AppWidgetProvider {
     }
 
     private static int id(Context ctx, String type, String name) {
-        return ctx.getResources().getIdentifier(name, type, ctx.getPackageName());
+        int id = Mods.res(ctx, name, type);
+        if (id == 0) {
+            Fake.log("widget: no resource " + type + "/" + name);
+        }
+        return id;
     }
 
     private static void update(Context ctx, AppWidgetManager mgr, int[] ids, Bitmap frame) {

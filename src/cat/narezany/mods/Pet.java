@@ -717,8 +717,7 @@ public final class Pet {
     /** Подпись кнопки «Остановить» у поля ввода, на языке приложения. */
     private static String stopLabel(Context ctx) {
         if (stop == null) {
-            int id = ctx.getResources().getIdentifier("chat_input_stop_button_content_description", "string",
-                    ctx.getPackageName());
+            int id = Mods.res(ctx, "chat_input_stop_button_content_description", "string");
             stop = id != 0 ? ctx.getString(id) : "";
         }
         return stop;

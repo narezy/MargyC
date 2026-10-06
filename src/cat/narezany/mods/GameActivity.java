@@ -76,7 +76,8 @@ public final class GameActivity extends Activity {
         private List<Bitmap> jumpFrames, warnFrames;
         private final Rect src = new Rect(), body = new Rect();
         private final RectF dst = new RectF();
-        private final float px; // размер «пикселя» спрайтов
+        private final float px; // размер «пикселя» Clawd
+        private final float bugPx; // и жуков: крупнее, чтобы было видно, через что прыгаешь
         private float y, vy; // высота Clawd над землёй и скорость, px/с
         private float speed, distance, nextGap;
         private long last;
@@ -87,6 +88,7 @@ public final class GameActivity extends Activity {
             super(c);
             this.ui = ui;
             px = ui.dp(2);
+            bugPx = ui.dp(5);
             pixels.setFilterBitmap(false);
             pixels.setAntiAlias(false);
             text.setColor(ui.text);
@@ -153,7 +155,7 @@ public final class GameActivity extends Activity {
                 running = true;
             }
             if (y == 0 && !over) {
-                vy = ui.dp(620);
+                vy = ui.dp(680); // жуки выше — прыжок чуть выше
             }
             last = SystemClock.uptimeMillis();
             invalidate();
@@ -179,7 +181,7 @@ public final class GameActivity extends Activity {
             for (Obstacle o : obstacles) {
                 o.x -= dx;
             }
-            while (!obstacles.isEmpty() && obstacles.get(0).x < -ui.dp(80)) {
+            while (!obstacles.isEmpty() && obstacles.get(0).x < -ui.dp(120)) {
                 obstacles.remove(0);
             }
             nextGap -= dx;
@@ -211,8 +213,8 @@ public final class GameActivity extends Activity {
             float bottom = g - y; // ноги Clawd
             float inset = px * 2;
             for (Obstacle o : obstacles) {
-                float ol = o.x + inset, or = o.x + BUG[0].length() * px * o.count - inset;
-                float ot = g - BUG.length * px + inset;
+                float ol = o.x + bugPx, or = o.x + BUG[0].length() * bugPx * o.count - bugPx;
+                float ot = g - BUG.length * bugPx + bugPx;
                 if (ol < right - inset && or > left + inset && bottom > ot) {
                     return true;
                 }
@@ -239,7 +241,7 @@ public final class GameActivity extends Activity {
             pixels.setColor(0xFFD97757);
             for (Obstacle o : obstacles) {
                 for (int k = 0; k < o.count; k++) {
-                    drawBug(c, o.x + k * BUG[0].length() * px, g);
+                    drawBug(c, o.x + k * BUG[0].length() * bugPx, g);
                 }
             }
             drawClawd(c, g, now);
@@ -259,7 +261,7 @@ public final class GameActivity extends Activity {
         }
 
         private void drawBug(Canvas c, float x, float g) {
-            float top = g - BUG.length * px;
+            float top = g - BUG.length * bugPx;
             for (int r = 0; r < BUG.length; r++) {
                 for (int col = 0; col < BUG[r].length(); col++) {
                     char ch = BUG[r].charAt(col);
@@ -267,7 +269,7 @@ public final class GameActivity extends Activity {
                         continue;
                     }
                     pixels.setColor(ch == '2' ? 0xFF101010 : 0xFFD97757);
-                    c.drawRect(x + col * px, top + r * px, x + (col + 1) * px, top + (r + 1) * px, pixels);
+                    c.drawRect(x + col * bugPx, top + r * bugPx, x + (col + 1) * bugPx, top + (r + 1) * bugPx, pixels);
                 }
             }
         }

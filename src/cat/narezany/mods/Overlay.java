@@ -155,10 +155,7 @@ final class Overlay {
             if (splashApplied != null && splashApplied == on) {
                 return;
             }
-            int id = a.getResources().getIdentifier("Theme.MargyC.Splash", "style", a.getPackageName());
-            if (id == 0) {
-                id = a.getResources().getIdentifier("Theme_MargyC_Splash", "style", a.getPackageName());
-            }
+            int id = Mods.res(a, "Theme.MargyC.Splash", "style");
             if (on && id == 0) {
                 Fake.log("splash: no Theme.MargyC.Splash");
                 return;

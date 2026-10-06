@@ -13,7 +13,7 @@ public final class Mods {
     static final String TAG = "MargyC";
     static final String VERSION = "1.3"; // версия MargyC, не Claude
     /** Номер беты этой версии, 0 — релиз. */
-    static final int BETA = 2;
+    static final int BETA = 3;
     /**
      * Номер сборки для проверки обновлений: 1.2 beta 1 = 10201, 1.2 = 10299. Релиз той же версии
      * больше любой её беты, поэтому бета-тестерам предлагается и он.
@@ -108,6 +108,26 @@ public final class Mods {
         } catch (Throwable t) {
             Log.e(TAG, "Overlay", t);
         }
+    }
+
+    private static String resPackage;
+
+    /**
+     * Ресурс приложения по имени. Патчер меняет пакет приложения (cat.narezany.claude), а таблица ресурсов
+     * остаётся с пакетом Claude, поэтому getIdentifier(..., getPackageName()) всегда даёт 0. Пакет ресурсов
+     * берём по любому своему ресурсу — иконке приложения.
+     */
+    static int res(Context ctx, String name, String type) {
+        android.content.res.Resources r = ctx.getResources();
+        if (resPackage == null) {
+            try {
+                resPackage = r.getResourcePackageName(ctx.getApplicationInfo().icon);
+            } catch (Exception e) {
+                resPackage = ctx.getPackageName();
+            }
+        }
+        int id = r.getIdentifier(name, type, resPackage);
+        return id != 0 ? id : r.getIdentifier(name, type, ctx.getPackageName());
     }
 
     private static SharedPreferences prefs;
