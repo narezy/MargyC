@@ -45,7 +45,8 @@ public final class Export {
     /** Параметры функции меню (лямбды с захваченным состоянием экрана): в них uuid беседы или события сессии. */
     private static final List<Object> owners = new ArrayList<Object>();
     private static final List<Object> codeOwners = new ArrayList<Object>();
-    private static Object chatClick, codeClick, icon;
+    private static Object chatClick, codeClick, searchClick;
+    private static final Map<String, Object> icons = new HashMap<String, Object>();
     private static Method item, paint;
 
     private Export() {}
@@ -88,8 +89,17 @@ public final class Export {
                     final List<Object> roots = new ArrayList<Object>(owners);
                     new Thread(() -> save(roots), "MargyC export").start();
                 });
+                searchClick = Bridge.function0("MargyC.search", () -> {
+                    final List<Object> roots = new ArrayList<Object>(owners);
+                    new Thread(() -> search(roots), "MargyC search").start();
+                });
             }
-            draw(composer, chatClick);
+            if (ChatSearch.enabled()) {
+                draw(composer, searchClick, L.t("Найти в чате"), "search");
+            }
+            if (enabled()) {
+                draw(composer, chatClick, L.t("Скачать диалог (.md)"), "download");
+            }
         } catch (RuntimeException e) {
             throw e;
         } catch (Throwable t) {
@@ -106,7 +116,9 @@ public final class Export {
                     new Thread(() -> saveCode(roots), "MargyC export").start();
                 });
             }
-            draw(composer, codeClick);
+            if (enabled()) {
+                draw(composer, codeClick, L.t("Скачать диалог (.md)"), "download");
+            }
         } catch (RuntimeException e) {
             throw e;
         } catch (Throwable t) {
@@ -134,8 +146,8 @@ public final class Export {
     }
 
     /** Свой пункт той же Compose-функцией пункта меню, что и пункты приложения. */
-    private static void draw(Object composer, Object onClick) throws Exception {
-        if (!enabled() || Names.MENU_ITEM.isEmpty()) {
+    private static void draw(Object composer, Object onClick, String label, String iconName) throws Exception {
+        if (Names.MENU_ITEM.isEmpty()) {
             return;
         }
         if (item == null) {
@@ -150,8 +162,11 @@ public final class Export {
                     paint = m;
                 }
             }
-            icon = Bridge.icon(Class.forName(Names.ICON), "download", null);
         }
+        if (!icons.containsKey(iconName)) {
+            icons.put(iconName, Bridge.icon(Class.forName(Names.ICON), iconName, null));
+        }
+        Object icon = icons.get(iconName);
         // значок — remember внутри композиции, поэтому painter берётся в каждой композиции заново
         Object painter = icon != null && paint != null ? paint.invoke(null, icon, composer) : null;
         Class<?>[] types = item.getParameterTypes();
@@ -167,7 +182,7 @@ public final class Export {
         if (composerIndex < 0 || types.length < 4 || types[0] != String.class) {
             return; // сигнатура пункта не та, что ждали: лучше без пункта, чем вылет
         }
-        args[0] = L.t("Скачать диалог (.md)");
+        args[0] = label;
         args[1] = onClick;
         if (painter != null && types[3].isInstance(painter)) {
             args[3] = painter;
@@ -191,30 +206,53 @@ public final class Export {
             return;
         }
         try {
-            Set<String> ids = uuids(roots);
-            Conversation c = null;
-            for (String id : ids) {
-                c = load(ctx, id);
-                if (c != null) {
-                    break;
-                }
-            }
+            Conversation c = find(ctx, roots);
             if (c == null) {
                 toast(ctx, L.t("Не нашёл этот диалог в кэше приложения. Пролистай его до начала и попробуй ещё раз."));
-                Fake.log("export: no conversation among " + ids.size() + " uuids");
                 return;
-            }
-            if (c.title.isEmpty()) {
-                c.title = memoryTitle(roots);
-            }
-            if (c.title.isEmpty()) {
-                c.title = firstLine(c);
             }
             write(ctx, c);
         } catch (Throwable t) {
             Log.e(Mods.TAG, "export", t);
             toast(ctx, L.t("Не получилось сохранить: ") + t);
         }
+    }
+
+    static void search(List<Object> roots) {
+        try {
+            Conversation c = find(Mods.app(), roots);
+            if (c == null) {
+                ChatSearch.notFound();
+                return;
+            }
+            ChatSearch.open(c);
+        } catch (Throwable t) {
+            Log.e(Mods.TAG, "search", t);
+            Fake.log("search error: " + t);
+        }
+    }
+
+    /** Беседа, открытая в чате: uuid из параметров меню, сообщения из кэша. */
+    private static Conversation find(Context ctx, List<Object> roots) {
+        Set<String> ids = uuids(roots);
+        Conversation c = null;
+        for (String id : ids) {
+            c = load(ctx, id);
+            if (c != null) {
+                break;
+            }
+        }
+        if (c == null) {
+            Fake.log("export: no conversation among " + ids.size() + " uuids");
+            return null;
+        }
+        if (c.title.isEmpty()) {
+            c.title = memoryTitle(roots);
+        }
+        if (c.title.isEmpty()) {
+            c.title = firstLine(c);
+        }
+        return c;
     }
 
     /** Беседа в Загрузки/MargyC/<название>.md. */

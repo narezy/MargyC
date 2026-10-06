@@ -39,9 +39,10 @@ public final class ModsActivity extends Activity {
             IC_CATALOG = 0xea12, IC_UPDATE = 0xe923, IC_BETA = 0xea4b, IC_CARD = 0xe870, IC_DONATE = 0xea70,
             IC_LICENSE = 0xe90c, IC_ICON = 0xe5c3, IC_WALLPAPER = 0xe3f4, IC_STREAMER = 0xe8f4, IC_GREETING = 0xe769,
             IC_SEASON = 0xeb3b, IC_SPLASH = 0xeb9b, IC_COUNTER = 0xeac7, IC_STATS = 0xf092, IC_SHARE = 0xe80d,
-            IC_DELETE = 0xe872;
+            IC_DELETE = 0xe872, IC_SEARCH = 0xe8b6;
     private static final int PICK_WALLPAPER = 10;
     private Ui.Row fontRow, lockTimeRow, updateRow, langRow, iconRow, wallpaperRow, greetingRow, seasonRow, statsRow;
+    private boolean searchOnly; // открыт поиск по чату из меню «⋮», без настроек
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,6 +50,16 @@ public final class ModsActivity extends Activity {
         super.onCreate(savedInstanceState);
         ui = new Ui(this);
         ui.setupWindow(this);
+        if (getIntent() != null && getIntent().getBooleanExtra(ChatSearch.EXTRA, false)) {
+            Export.Conversation c = ChatSearch.take();
+            if (c == null) {
+                finish();
+                return;
+            }
+            searchOnly = true;
+            setContentView(ChatSearch.screen(this, ui, c));
+            return;
+        }
 
         LinearLayout content = ui.column();
         content.setPadding(ui.dp(16), ui.dp(4), ui.dp(16), ui.dp(104)); // место под плашку перезапуска
@@ -118,7 +129,9 @@ public final class ModsActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
-        refresh();
+        if (!searchOnly) {
+            refresh();
+        }
     }
 
     // ---- язык ----
@@ -872,6 +885,18 @@ public final class ModsActivity extends Activity {
         });
         export.icon(IC_DOWNLOAD);
         g.addView(export);
+        Ui.Row search = ui.new Row(L.t("Поиск в чате"),
+                L.t("Пункт «Найти в чате» в том же меню «⋮»: вся беседа с подсветкой совпадений, стрелками — к следующему."));
+        search.toggle(ChatSearch.enabled(), true, on -> {
+            try {
+                ChatSearch.setEnabled(on);
+                return true;
+            } catch (Exception e) {
+                return false;
+            }
+        });
+        search.icon(IC_SEARCH);
+        g.addView(search);
         Ui.Row open = ui.new Row(L.t("Открыть диалог .md"),
                 L.t("Экспорт MargyC или любой .md с заголовками «## Ты» / «## Claude»: посмотреть как чат и продолжить в Claude."));
         open.chevron();
