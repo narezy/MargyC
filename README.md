@@ -12,7 +12,7 @@ Russian UI, your own themes, meme models, a Clawd pet on the composer and mods y
 <a href="docs/plugins.md"><img src="https://img.shields.io/badge/Write_a_mod-docs-D97757?style=for-the-badge&logo=readthedocs&logoColor=white" alt="Write a mod"></a>
 <a href="https://yoomoney.ru/to/4100118196133693"><img src="https://img.shields.io/badge/Donate-YooMoney-8B3FFD?style=for-the-badge" alt="Donate"></a>
 
-<img src="https://img.shields.io/badge/version-1.3-555?style=flat-square" alt="version 1.3">
+<img src="https://img.shields.io/badge/version-1.3.1-555?style=flat-square" alt="version 1.3.1">
 <img src="https://img.shields.io/badge/Android-10%2B-555?style=flat-square&logo=android" alt="Android 10+">
 <img src="https://img.shields.io/badge/arch-arm64--v8a-555?style=flat-square" alt="arm64-v8a">
 <img src="https://img.shields.io/badge/license-GPL--3.0-555?style=flat-square" alt="GPL-3.0">
