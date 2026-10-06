@@ -12,7 +12,7 @@ Russian UI, your own themes, meme models, a Clawd pet on the composer and mods y
 <a href="docs/plugins.md"><img src="https://img.shields.io/badge/Write_a_mod-docs-D97757?style=for-the-badge&logo=readthedocs&logoColor=white" alt="Write a mod"></a>
 <a href="https://yoomoney.ru/to/4100118196133693"><img src="https://img.shields.io/badge/Donate-YooMoney-8B3FFD?style=for-the-badge" alt="Donate"></a>
 
-<img src="https://img.shields.io/badge/version-1.2-555?style=flat-square" alt="version 1.2">
+<img src="https://img.shields.io/badge/version-1.3-555?style=flat-square" alt="version 1.3">
 <img src="https://img.shields.io/badge/Android-10%2B-555?style=flat-square&logo=android" alt="Android 10+">
 <img src="https://img.shields.io/badge/arch-arm64--v8a-555?style=flat-square" alt="arm64-v8a">
 <img src="https://img.shields.io/badge/license-GPL--3.0-555?style=flat-square" alt="GPL-3.0">
@@ -29,8 +29,12 @@ Russian UI, your own themes, meme models, a Clawd pet on the composer and mods y
 
 | | |
 |---|---|
-| 🇷🇺 **Russian UI** | the whole app in Russian, including model descriptions that come from the server |
+| 🇷🇺 **Russian, Belarusian, Kazakh** | the whole app in Russian, including model descriptions that come from the server, plus Belarusian and Kazakh; pick the language right in Mods |
 | 🖼️ **Theme gallery** | ready themes in one tap: AMOLED, Material You, Catppuccin, Nord, Dracula, Gruvbox, Tokyo Night, Sepia |
+| 🌄 **Chat wallpaper** | ready gradient presets or your own photo behind the chat, with dimming |
+| 🎯 **App icon** | MargyC, Claude orange, forest green, AMOLED or pixel Clawd on the home screen |
+| 👋 **Greetings & splash** | your own home screen greetings by time of day, Clawd instead of Claude's logo on the loading screen, seasonal snow, leaves, petals or stars |
+| 🕶️ **Streamer mode** | your name and email hidden everywhere: settings, profile and the home screen greeting |
 | 🔤 **Font** | your font in the whole app: system, serif, Claude's serif, monospace or your own .ttf/.otf |
 | 🎨 **Accent color & themes** | recolor Claude's orange, or every color of the dark and light themes. Share a theme as plain text — or just ask Claude to write one: it knows the format and your phone's Material You palette |
 | 🧠 **System prompt presets** | hidden context sent with every message: the built-in presets tell Claude about the mod, your device, every MargyC feature and your enabled mods — or write your own |
@@ -38,6 +42,9 @@ Russian UI, your own themes, meme models, a Clawd pet on the composer and mods y
 | 🦀 **Clawd pet** | the app's own animated Clawd sits on top of the message box in chat and Code, follows it as it grows, can be dragged around and jumps when tapped. While Claude answers he types on a laptop, then jumps or dances — with Claude's own animations |
 | 🔒 **App lock** | open Claude with your fingerprint, face or PIN; hide the chat in recent apps |
 | 📝 **Conversation export** | "Download conversation (.md)" in the chat's ⋮ menu; open a .md on the Mods screen to read it as a chat and continue it in Claude |
+| 🔍 **Search in chat** | "Find in chat" in the same ⋮ menu: the whole conversation with matches highlighted, arrows jump between them; a character counter at the message box |
+| 📊 **Claude in numbers** | messages, active days, streak, busiest day, favourite model and an hours chart — counted on the phone only |
+| 🎮 **Clawd widget & game** | a home screen widget with Clawd and today's messages; a mini-game where Clawd jumps over bugs |
 | 🧩 **Custom mods** | install `.mcmod` plugins: compiled dex with a manifest, settings drawn by the app, or pick one from the built-in catalog. [Write your own](docs/plugins.md) |
 | 🔄 **Updates** | MargyC checks for new versions itself; turn on the beta channel to get betas first |
 | 🌐 **Russian or English** | the Mods screen follows the app language |
