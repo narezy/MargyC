@@ -17,7 +17,9 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.IntUnaryOperator;
 import java.util.function.Supplier;
@@ -38,6 +40,8 @@ import dalvik.system.DexClassLoader;
  */
 public final class Plugins {
     static final int API = 1;
+    private static final long MAX_ENTRY_BYTES = 64L * 1024 * 1024;
+    private static final long MAX_ARCHIVE_BYTES = 128L * 1024 * 1024;
 
     static final List<Supplier<String>> PROMPTS = new CopyOnWriteArrayList<Supplier<String>>();
     static final List<UnaryOperator<String>> TEXTS = new CopyOnWriteArrayList<UnaryOperator<String>>();
@@ -96,6 +100,9 @@ public final class Plugins {
         }
         java.util.Arrays.sort(dirs);
         for (File d : dirs) {
+            if (!d.isDirectory() || d.getName().startsWith(".")) {
+                continue;
+            }
             try {
                 list.add(new Info(d, new JSONObject(read(new File(d, "manifest.json")))));
             } catch (Exception e) {
@@ -127,26 +134,48 @@ public final class Plugins {
 
     /** Поставить .mcmod. Бросает исключение с понятным текстом, если архив не мод. */
     static Info install(Context ctx, InputStream in) throws Exception {
-        File tmp = new File(ctx.getCacheDir(), "plugin-" + System.nanoTime());
-        tmp.mkdirs();
+        File root = root(ctx);
+        if (!root.exists() && !root.mkdirs()) {
+            throw new IllegalStateException(L.t("не удалось создать папку модов"));
+        }
+        File tmp = new File(root, ".install-" + System.nanoTime());
+        if (!tmp.mkdir()) {
+            throw new IllegalStateException(L.t("не удалось создать временную папку"));
+        }
         try {
-            ZipInputStream zip = new ZipInputStream(in);
-            ZipEntry e;
-            while ((e = zip.getNextEntry()) != null) {
-                String name = e.getName();
-                if (e.isDirectory() || name.contains("/") || name.contains("\\")) {
-                    continue; // только файлы в корне архива
+            long total = 0;
+            Set<String> names = new HashSet<String>();
+            try (ZipInputStream zip = new ZipInputStream(in)) {
+                ZipEntry e;
+                while ((e = zip.getNextEntry()) != null) {
+                    String name = e.getName();
+                    if (e.isDirectory() || name.contains("/") || name.contains("\\")) {
+                        zip.closeEntry();
+                        continue; // только файлы в корне архива
+                    }
+                    if (!name.equals("manifest.json") && !name.equals("icon.png")
+                            && !name.matches("classes\\d*\\.dex")) {
+                        zip.closeEntry();
+                        continue;
+                    }
+                    if (!names.add(name)) {
+                        throw new IllegalArgumentException(L.t("повторяющийся файл в архиве: ") + name);
+                    }
+                    long entryBytes = 0;
+                    try (FileOutputStream out = new FileOutputStream(new File(tmp, name))) {
+                        byte[] buf = new byte[65536];
+                        int n;
+                        while ((n = zip.read(buf)) != -1) {
+                            entryBytes += n;
+                            total += n;
+                            if (entryBytes > MAX_ENTRY_BYTES || total > MAX_ARCHIVE_BYTES) {
+                                throw new IllegalArgumentException(L.t("архив мода слишком большой"));
+                            }
+                            out.write(buf, 0, n);
+                        }
+                    }
+                    zip.closeEntry();
                 }
-                if (!name.equals("manifest.json") && !name.equals("icon.png") && !name.matches("classes\\d*\\.dex")) {
-                    continue;
-                }
-                FileOutputStream out = new FileOutputStream(new File(tmp, name));
-                byte[] buf = new byte[65536];
-                int n;
-                while ((n = zip.read(buf)) > 0) {
-                    out.write(buf, 0, n);
-                }
-                out.close();
             }
             File manifest = new File(tmp, "manifest.json");
             if (!manifest.exists()) {
@@ -163,18 +192,39 @@ public final class Plugins {
             if (!new File(tmp, "classes.dex").exists()) {
                 throw new IllegalArgumentException(L.t("в архиве нет classes.dex"));
             }
-            if (m.optInt("api", 1) > API) {
-                throw new IllegalArgumentException(L.t("мод для более новой версии MargyC (API ") + m.optInt("api") + ")");
+            Object apiValue = m.opt("api");
+            if (apiValue != null && !(apiValue instanceof Number)) {
+                throw new IllegalArgumentException(L.t("api в manifest.json должен быть целым числом"));
             }
-            File dir = new File(root(ctx), id);
-            delete(dir);
-            root(ctx).mkdirs();
+            int api = apiValue == null ? 1 : ((Number) apiValue).intValue();
+            if (apiValue instanceof Number && ((Number) apiValue).doubleValue() != api) {
+                throw new IllegalArgumentException(L.t("api в manifest.json должен быть целым числом"));
+            }
+            if (api < 1) {
+                throw new IllegalArgumentException(L.t("api в manifest.json должен быть положительным числом"));
+            }
+            if (api > API) {
+                throw new IllegalArgumentException(L.t("мод для более новой версии MargyC (API ") + api + ")");
+            }
+            File dir = new File(root, id);
+            File backup = new File(root, ".backup-" + id + "-" + System.nanoTime());
+            boolean hadExisting = dir.exists();
+            if (hadExisting && !dir.renameTo(backup)) {
+                throw new IllegalStateException(L.t("не удалось подготовить обновление мода"));
+            }
             if (!tmp.renameTo(dir)) {
+                if (hadExisting) {
+                    backup.renameTo(dir);
+                }
                 throw new IllegalStateException(L.t("не удалось сохранить мод"));
             }
-            for (File f : dir.listFiles()) {
-                if (f.getName().endsWith(".dex")) {
-                    f.setReadOnly(); // Android 14+ грузит только неизменяемые dex
+            delete(backup);
+            File[] installedFiles = dir.listFiles();
+            if (installedFiles != null) {
+                for (File f : installedFiles) {
+                    if (f.getName().endsWith(".dex")) {
+                        f.setReadOnly(); // Android 14+ грузит только неизменяемые dex
+                    }
                 }
             }
             Mods.prefs().edit().remove("plugin_error_" + id).apply();
@@ -191,6 +241,9 @@ public final class Plugins {
     }
 
     private static void delete(File f) {
+        if (f == null || !f.exists()) {
+            return;
+        }
         File[] children = f.listFiles();
         if (children != null) {
             for (File c : children) {
@@ -249,12 +302,18 @@ public final class Plugins {
             try {
                 StringBuilder path = new StringBuilder();
                 File[] files = info.dir.listFiles();
+                if (files == null) {
+                    throw new IllegalStateException("cannot read mod directory");
+                }
                 java.util.Arrays.sort(files);
                 for (File f : files) {
                     if (f.getName().endsWith(".dex")) {
                         f.setReadOnly();
                         path.append(path.length() == 0 ? "" : File.pathSeparator).append(f.getPath());
                     }
+                }
+                if (path.length() == 0) {
+                    throw new IllegalStateException("mod has no dex files");
                 }
                 DexClassLoader loader = new DexClassLoader(path.toString(), app.getCodeCacheDir().getPath(), null,
                         Plugins.class.getClassLoader());

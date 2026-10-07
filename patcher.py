@@ -26,6 +26,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import urllib.error
 import urllib.request
 import zipfile
 
@@ -77,13 +78,22 @@ def tools_dir():
 
 def download(url, dest):
     log(f"  скачиваю {url.rsplit('/', 1)[-1]}")
+    dest.parent.mkdir(parents=True, exist_ok=True)
     tmp = dest.with_suffix(dest.suffix + ".part")
-    with urllib.request.urlopen(url) as r, open(tmp, "wb") as f:
-        shutil.copyfileobj(r, f)
-    tmp.rename(dest)
+    tmp.unlink(missing_ok=True)
+    try:
+        with urllib.request.urlopen(url, timeout=60) as r, open(tmp, "wb") as f:
+            shutil.copyfileobj(r, f)
+        os.replace(tmp, dest)
+    except (OSError, urllib.error.URLError) as e:
+        tmp.unlink(missing_ok=True)
+        raise PatchError(f"не удалось скачать {url}: {e}") from e
 
 
 def ensure_tools():
+    for exe in ("java", "javac", "keytool"):
+        if not shutil.which(exe):
+            raise PatchError(f"не найден {exe}, нужна JDK 17+")
     d = tools_dir()
     for name, url in TOOLS.items():
         if not (d / name).exists():
@@ -92,13 +102,19 @@ def ensure_tools():
     if not android_jar.exists():
         z = d / "platform.zip"
         download(PLATFORM_ZIP, z)
-        with zipfile.ZipFile(z) as zf:
-            entry = next(n for n in zf.namelist() if n.endswith("/android.jar"))
-            android_jar.write_bytes(zf.read(entry))
-        z.unlink()
-    for exe in ("java", "javac", "keytool"):
-        if not shutil.which(exe):
-            raise PatchError(f"не найден {exe}, нужна JDK 17+")
+        partial = android_jar.with_suffix(".jar.part")
+        try:
+            with zipfile.ZipFile(z) as zf:
+                entry = next((n for n in zf.namelist() if n.endswith("/android.jar")), None)
+                if entry is None:
+                    raise PatchError("в архиве Android SDK нет android.jar")
+                partial.write_bytes(zf.read(entry))
+            os.replace(partial, android_jar)
+        except (OSError, zipfile.BadZipFile) as e:
+            raise PatchError(f"не удалось распаковать android.jar: {e}") from e
+        finally:
+            partial.unlink(missing_ok=True)
+            z.unlink(missing_ok=True)
     return d
 
 
@@ -107,21 +123,26 @@ def ensure_tools():
 def merge_input(src, work, tools):
     """XAPK/APKS/APKM/папка со сплитами/APK -> один APK."""
     src = pathlib.Path(src)
-    if src.is_file() and src.suffix == ".apk":
+    if not src.exists():
+        raise PatchError(f"входной файл или папка не найдены: {src}")
+    if src.is_file() and src.suffix.lower() == ".apk":
         return src
     splits = work / "splits"
     shutil.rmtree(splits, ignore_errors=True)
-    splits.mkdir()
+    splits.mkdir(parents=True)
     if src.is_dir():
-        apks = list(src.glob("*.apk"))
+        apks = [p for p in src.iterdir() if p.is_file() and p.suffix.lower() == ".apk"]
         for a in apks:
             shutil.copy(a, splits / a.name)
     else:
-        with zipfile.ZipFile(src) as zf:
-            for n in zf.namelist():
-                if n.endswith(".apk") and "/" not in n.strip("/"):
-                    (splits / n).write_bytes(zf.read(n))
-    apks = sorted(splits.glob("*.apk"))
+        try:
+            with zipfile.ZipFile(src) as zf:
+                for n in zf.namelist():
+                    if n.lower().endswith(".apk") and "/" not in n.strip("/"):
+                        (splits / pathlib.Path(n).name).write_bytes(zf.read(n))
+        except (OSError, zipfile.BadZipFile) as e:
+            raise PatchError(f"не удалось прочитать {src}: {e}") from e
+    apks = sorted(p for p in splits.iterdir() if p.is_file() and p.suffix.lower() == ".apk")
     if not apks:
         raise PatchError(f"в {src} нет APK")
     if len(apks) == 1:
